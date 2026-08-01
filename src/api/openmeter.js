@@ -424,4 +424,30 @@ export const createSubscription = async (subscriptionData) => {
   }
 };
 
+// Cancel a subscription. timing: 'immediate' | 'next_billing_cycle' | RFC3339 date-time
+export const cancelSubscription = async (subscriptionId, timing = 'immediate') => {
+  try {
+    const response = await api.post(`/v1/subscriptions/${subscriptionId}/cancel`, { timing });
+    return response.data;
+  } catch (error) {
+    console.error('Error canceling subscription:', error);
+    throw error;
+  }
+};
+
+// Change a running subscription to another plan.
+export const changeSubscription = async (subscriptionId, planKey, options = {}) => {
+  try {
+    const response = await api.post(`/v1/subscriptions/${subscriptionId}/change`, {
+      timing: options.timing || 'immediate',
+      plan: { key: planKey },
+      ...(options.name ? { name: options.name } : {}),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error changing subscription:', error);
+    throw error;
+  }
+};
+
 export default api;

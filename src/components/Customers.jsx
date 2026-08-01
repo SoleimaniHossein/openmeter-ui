@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, RefreshCw, Edit2, Trash2, FileText, Receipt, Loader2, AlertCircle, CheckCircle, Users, Send, Info, PackagePlus, BadgeCheck, X } from 'lucide-react';
-import { getCustomers, createCustomer, updateCustomer, deleteCustomer, invoiceCustomer, getPlans, createSubscription } from '../api/openmeter';
+import { Plus, RefreshCw, Edit2, Trash2, FileText, Receipt, Loader2, AlertCircle, CheckCircle, Users, Send, Info, PackagePlus, BadgeCheck, X, ArrowLeftRight, Ban } from 'lucide-react';
+import { getCustomers, createCustomer, updateCustomer, deleteCustomer, invoiceCustomer, getPlans, createSubscription, cancelSubscription, changeSubscription } from '../api/openmeter';
 import { describeInvoiceError, hasSubscription } from '../utils/billing';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
@@ -26,6 +26,15 @@ const Customers = () => {
   const [subscribing, setSubscribing] = useState(false);
   const [subscribePlanKey, setSubscribePlanKey] = useState('');
   const [alignCurrency, setAlignCurrency] = useState(true);
+
+  const [changingCustomer, setChangingCustomer] = useState(null);
+  const [changing, setChanging] = useState(false);
+  const [changePlanKey, setChangePlanKey] = useState('');
+  const [changeTiming, setChangeTiming] = useState('immediate');
+
+  const [cancelingCustomer, setCancelingCustomer] = useState(null);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelTiming, setCancelTiming] = useState('immediate');
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
@@ -130,6 +139,65 @@ const Customers = () => {
       setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to create subscription' });
     } finally {
       setSubscribing(false);
+    }
+  };
+
+  const getActiveSubscription = (customer) =>
+    customer?.subscriptions?.find((s) => s.status === 'active');
+
+  const openChangePlan = (customer) => {
+    const current = getActiveSubscription(customer);
+    setChangingCustomer(customer);
+    setChangePlanKey(plans.find((p) => p.key !== current?.plan?.key)?.key || plans[0]?.key || '');
+    setChangeTiming('immediate');
+  };
+
+  const handleChangePlan = async () => {
+    const subscription = getActiveSubscription(changingCustomer);
+    if (!changingCustomer || !subscription || !changePlanKey) return;
+    const plan = getPlan(changePlanKey);
+    if (!plan) return;
+    setChanging(true);
+    setMessage(null);
+    try {
+      await changeSubscription(subscription.id, plan.key, {
+        timing: changeTiming,
+        name: `${plan.name || plan.key} v${plan.version || 1}`,
+      });
+      setChangingCustomer(null);
+      setMessage({ type: 'success', text: `${changingCustomer.name}'s subscription will switch to "${plan.name || plan.key}"${changeTiming === 'immediate' ? '' : ' at the next billing cycle'}.` });
+      fetchCustomers();
+    } catch (error) {
+      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to change subscription' });
+    } finally {
+      setChanging(false);
+    }
+  };
+
+  const openCancel = (customer) => {
+    setCancelingCustomer(customer);
+    setCancelTiming('immediate');
+  };
+
+  const handleCancel = async () => {
+    const subscription = getActiveSubscription(cancelingCustomer);
+    if (!cancelingCustomer || !subscription) return;
+    setCanceling(true);
+    setMessage(null);
+    try {
+      await cancelSubscription(subscription.id, cancelTiming);
+      setCancelingCustomer(null);
+      setMessage({
+        type: 'success',
+        text: cancelTiming === 'immediate'
+          ? `${cancelingCustomer.name}'s subscription has been canceled.`
+          : `${cancelingCustomer.name}'s subscription will be canceled at the end of the current billing period.`,
+      });
+      fetchCustomers();
+    } catch (error) {
+      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to cancel subscription' });
+    } finally {
+      setCanceling(false);
     }
   };
 
@@ -285,6 +353,24 @@ const Customers = () => {
                             title="Subscribe this customer to a plan so usage becomes billable"
                           >
                             <PackagePlus className="w-3.5 h-3.5 mr-1" /> Subscribe
+                          </button>
+                        )}
+                        {subscribed && plans.length > 0 && (
+                          <button
+                            onClick={() => openChangePlan(c)}
+                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 transition"
+                            title="Change this customer's subscription to a different plan"
+                          >
+                            <ArrowLeftRight className="w-3.5 h-3.5 mr-1" /> Change
+                          </button>
+                        )}
+                        {subscribed && (
+                          <button
+                            onClick={() => openCancel(c)}
+                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition"
+                            title="Cancel this customer's subscription"
+                          >
+                            <Ban className="w-3.5 h-3.5 mr-1" /> Cancel
                           </button>
                         )}
                         <button
@@ -454,6 +540,148 @@ const Customers = () => {
               >
                 {subscribing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <PackagePlus className="w-4 h-4 mr-2" />}
                 Subscribe
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change plan modal */}
+      {changingCustomer && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Change plan for {changingCustomer.name}</h3>
+              <button onClick={() => setChangingCustomer(null)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              {(() => {
+                const current = getActiveSubscription(changingCustomer);
+                return (
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-600">
+                    Current plan: <strong>{current?.name || current?.plan?.key || 'Unknown'}</strong>
+                    {current?.activeTo && ` · active until ${new Date(current.activeTo).toLocaleDateString()}`}
+                  </div>
+                );
+              })()}
+              <div>
+                <SearchableSelect
+                  label="New plan"
+                  value={changePlanKey}
+                  onChange={setChangePlanKey}
+                  options={plans
+                    .filter((p) => p.key !== getActiveSubscription(changingCustomer)?.plan?.key)
+                    .map((p) => ({ value: p.key, label: `${p.name} (${p.currency}) — ${p.billingCadence || 'one-time'}` }))}
+                  placeholder="Select a plan"
+                />
+                {getPlan(changePlanKey) && (
+                  <ul className="mt-2 space-y-1 text-xs text-slate-500">
+                    {getPlan(changePlanKey).phases?.flatMap((ph) => ph.rateCards || []).map((rc, i) => (
+                      <li key={i} className="flex items-center justify-between">
+                        <span>{rc.name}</span>
+                        <span className="font-mono text-slate-400">
+                          {rc.price?.type === 'usage_based' || rc.price?.type === 'unit'
+                            ? `${rc.price.amount || 0} / ${rc.price.aggregation || 'unit'}`
+                            : rc.price?.amount || ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">When to switch</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'immediate', label: 'Immediately' },
+                    { value: 'next_billing_cycle', label: 'Next billing cycle' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setChangeTiming(opt.value)}
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition ${
+                        changeTiming === opt.value
+                          ? 'bg-amber-50 border-amber-300 text-amber-700'
+                          : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+              <button onClick={() => setChangingCustomer(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Cancel</button>
+              <button
+                onClick={handleChangePlan}
+                disabled={changing || !changePlanKey}
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 transition disabled:opacity-50"
+              >
+                {changing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowLeftRight className="w-4 h-4 mr-2" />}
+                Change Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel subscription modal */}
+      {cancelingCustomer && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Cancel subscription for {cancelingCustomer.name}</h3>
+              <button onClick={() => setCancelingCustomer(null)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              {(() => {
+                const current = getActiveSubscription(cancelingCustomer);
+                return (
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-600">
+                    <strong>{current?.name || current?.plan?.key || 'Active subscription'}</strong>
+                    {current?.activeTo && ` · active until ${new Date(current.activeTo).toLocaleDateString()}`}
+                  </div>
+                );
+              })()}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">When to cancel</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'immediate', label: 'Immediately' },
+                    { value: 'next_billing_cycle', label: 'End of billing period' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setCancelTiming(opt.value)}
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition ${
+                        cancelTiming === opt.value
+                          ? 'bg-red-50 border-red-300 text-red-700'
+                          : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5">
+                  {cancelTiming === 'immediate'
+                    ? 'Usage stops being billable as soon as the subscription is canceled.'
+                    : 'The subscription stays active until the end of the current billing period, then cancels.'}
+                </p>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+              <button onClick={() => setCancelingCustomer(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Keep subscription</button>
+              <button
+                onClick={handleCancel}
+                disabled={canceling}
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
+              >
+                {canceling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Ban className="w-4 h-4 mr-2" />}
+                Cancel Subscription
               </button>
             </div>
           </div>
