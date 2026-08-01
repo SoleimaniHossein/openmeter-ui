@@ -35,7 +35,9 @@ const Invoices = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState(urlCustomer);
-  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
+  const [statusFilter, setStatusFilter] = useState(
+    (searchParams.get('status') || '').split(',').filter(Boolean)
+  );
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [invoicing, setInvoicing] = useState(false);
   const [message, setMessage] = useState(null);
@@ -47,7 +49,7 @@ const Invoices = () => {
     try {
       const params = { pageSize: 100, expand: 'lines' };
       if (selectedCustomer) params.customers = selectedCustomer;
-      if (statusFilter) params.statuses = statusFilter;
+      if (statusFilter.length) params.statuses = statusFilter;
       const res = await getInvoices(params);
       setInvoices(res.data || []);
     } catch (error) {
@@ -72,7 +74,7 @@ const Invoices = () => {
   useEffect(() => {
     const next = {};
     if (selectedCustomer) next.customer = selectedCustomer;
-    if (statusFilter) next.status = statusFilter;
+    if (statusFilter.length) next.status = statusFilter.join(',');
     setSearchParams(next, { replace: true });
   }, [selectedCustomer, statusFilter, setSearchParams]);
 
@@ -245,9 +247,10 @@ const Invoices = () => {
           <div>
             <SearchableSelect
               label="Status"
+              multiple
               value={statusFilter}
               onChange={setStatusFilter}
-              options={STATUS_FILTERS.map((s) => ({ value: s.value, label: s.label }))}
+              options={STATUS_FILTERS.filter((s) => s.value !== '').map((s) => ({ value: s.value, label: s.label }))}
               placeholder="All statuses"
             />
           </div>

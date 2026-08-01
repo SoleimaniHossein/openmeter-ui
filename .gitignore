@@ -1,3 +1,8 @@
 node_modules
 package-lock.json
 dist
+
+# env files (commit .env.example, never .env)
+.env
+.env.local
+.env.*.local

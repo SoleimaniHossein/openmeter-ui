@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 let API_TOKEN = localStorage.getItem('openmeter_token') || '';
-// Use relative path - goes through Vite proxy
-const API_BASE_URL = '/api';
+// Use relative path by default (goes through Vite proxy). Can be overridden
+// with VITE_API_BASE_URL for direct/backend access or production builds.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
