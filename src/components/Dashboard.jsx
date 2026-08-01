@@ -52,35 +52,54 @@ const Dashboard = () => {
   if (loading) return <LoadingSpinner message="Loading dashboard..." />;
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
         <p className="text-red-600 font-semibold">Error loading data</p>
-        <p className="text-red-500 text-sm">{error}</p>
-        <button onClick={fetchData} className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">Retry</button>
+        <p className="text-red-500 text-sm mt-1">{error}</p>
+        <button onClick={fetchData} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Retry</button>
       </div>
     );
   }
 
-  const StatCard = ({ title, value, icon: Icon, color }) => (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between">
-        <div><p className="text-sm text-gray-500">{title}</p><p className="text-2xl font-semibold">{value}</p></div>
-        <div className={`p-3 bg-${color}-100 rounded-full`}><Icon className={`w-6 h-6 text-${color}-600`} /></div>
+  const StatCard = ({ title, value, icon: Icon, accent }) => {
+    const palettes = {
+      indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', icon: 'bg-indigo-500/10' },
+      emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: 'bg-emerald-500/10' },
+      amber: { bg: 'bg-amber-50', text: 'text-amber-600', icon: 'bg-amber-500/10' },
+    };
+    const p = palettes[accent] || palettes.indigo;
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">{title}</p>
+            <p className="text-3xl font-semibold text-slate-900 mt-1">{value}</p>
+          </div>
+          <div className={`${p.icon} p-3 rounded-full`}>
+            <Icon className={`w-6 h-6 ${p.text}`} />
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <StatCard title="Total Customers" value={stats.totalCustomers} icon={Users} color="blue" />
-        <StatCard title="Total Meters" value={stats.totalMeters} icon={Activity} color="green" />
-        <StatCard title="Total Usage (24h)" value={stats.totalUsage} icon={TrendingUp} color="orange" />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard title="Total Customers" value={stats.totalCustomers} icon={Users} accent="indigo" />
+        <StatCard title="Total Meters" value={stats.totalMeters} icon={Activity} accent="emerald" />
+        <StatCard title="Total Usage (24h)" value={stats.totalUsage} icon={TrendingUp} accent="amber" />
       </div>
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center"><Zap className="w-5 h-5 mr-2 text-yellow-500" />Usage Overview</h3>
-        {chartData.length > 0 ? <UsageChart data={chartData} /> : <p className="text-center text-gray-500 py-8">No usage data available</p>}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+          <Zap className="w-5 h-5 mr-2 text-amber-500" /> Usage Overview
+        </h3>
+        {chartData.length > 0 ? <UsageChart data={chartData} /> : <p className="text-center text-slate-400 py-8">No usage data available</p>}
       </div>
-      <button onClick={fetchData} className="fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition">
+      <button
+        onClick={fetchData}
+        className="fixed bottom-8 right-8 bg-indigo-600 text-white p-3.5 rounded-full shadow-lg hover:bg-indigo-700 transition"
+        title="Refresh"
+      >
         <RefreshCw className="w-6 h-6" />
       </button>
     </div>

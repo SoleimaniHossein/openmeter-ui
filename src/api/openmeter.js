@@ -31,29 +31,34 @@ export const clearApiToken = () => {
 // Helper to extract data from various response formats
 const extractData = (response) => {
   if (!response) return [];
-  if (response?.data?.data) return response.data.data;
-  if (response?.data?.items) return response.data.items;
   if (Array.isArray(response?.data)) return response.data;
   if (Array.isArray(response)) return response;
+  if (response?.data?.items) return response.data.items;
+  if (response?.data?.data) return response.data.data;
+  if (response?.items) return response.items;
   return [];
 };
 
 // Helper to get total count
 const getTotal = (response) => {
   if (!response) return 0;
+  if (typeof response?.totalCount === 'number') return response.totalCount;
+  if (typeof response?.data?.totalCount === 'number') return response.data.totalCount;
   if (response?.meta?.page?.total) return response.meta.page.total;
-  if (response?.totalCount) return response.totalCount;
+  if (Array.isArray(response?.data)) return response.data.length;
   if (Array.isArray(response)) return response.length;
   return 0;
 };
 
 // ============ METERS ============
-export const getMeters = async () => {
+// Meters use the upstream OpenMeter v1 API so SUM/AVG meters get full
+// valueProperty + groupBy support (the legacy gateway only exposes snake_case).
+export const getMeters = async (params = {}) => {
   try {
-    const response = await api.get('/openmeter/meters');
-    return { 
-      data: extractData(response), 
-      total: getTotal(response.data) 
+    const response = await api.get('/v1/meters', { params: { pageSize: 100, ...params } });
+    return {
+      data: extractData(response),
+      total: getTotal(response.data),
     };
   } catch (error) {
     console.error('Error fetching meters:', error);
@@ -63,7 +68,7 @@ export const getMeters = async () => {
 
 export const createMeter = async (meterData) => {
   try {
-    const response = await api.post('/openmeter/meters', meterData);
+    const response = await api.post('/v1/meters', meterData);
     return response.data;
   } catch (error) {
     console.error('Error creating meter:', error);
@@ -71,9 +76,10 @@ export const createMeter = async (meterData) => {
   }
 };
 
-export const updateMeter = async (meterId, meterData) => {
+// v1 only allows updating name, description and groupBy (slug/aggregation/eventType are immutable).
+export const updateMeter = async (meterIdOrSlug, meterData) => {
   try {
-    const response = await api.put(`/openmeter/meters/${meterId}`, meterData);
+    const response = await api.put(`/v1/meters/${meterIdOrSlug}`, meterData);
     return response.data;
   } catch (error) {
     console.error('Error updating meter:', error);
@@ -81,24 +87,32 @@ export const updateMeter = async (meterId, meterData) => {
   }
 };
 
-export const deleteMeter = async (meterId) => {
+export const deleteMeter = async (meterIdOrSlug) => {
   try {
-    await api.delete(`/openmeter/meters/${meterId}`);
+    await api.delete(`/v1/meters/${meterIdOrSlug}`);
   } catch (error) {
     console.error('Error deleting meter:', error);
     throw error;
   }
 };
 
+const WINDOW_SIZE_MAP = { 'PT1M': 'MINUTE', 'PT1H': 'HOUR', 'P1D': 'DAY', 'P1M': 'MONTH' };
+
 export const queryMeter = async (meterId, from, to, granularity = 'PT1H', groupBy = []) => {
   try {
-    const response = await api.post(`/openmeter/meters/${meterId}/query`, {
+    const response = await api.post(`/v1/meters/${meterId}/query`, {
       from,
       to,
-      granularity,
-      group_by_dimensions: groupBy,
+      ...(granularity ? { windowSize: WINDOW_SIZE_MAP[granularity] || granularity } : {}),
+      ...(Array.isArray(groupBy) && groupBy.length ? { groupBy } : {}),
     });
-    return response.data;
+    const data = response.data?.data || [];
+    // Normalize v1 rows (windowStart/windowEnd) to {from, value} for the charts.
+    return {
+      data: data.map((p) => ({ from: p.windowStart, to: p.windowEnd, value: p.value || 0, subject: p.subject })),
+      from: response.data?.from,
+      to: response.data?.to,
+    };
   } catch (error) {
     console.error('Error querying meter:', error);
     throw error;
@@ -106,9 +120,11 @@ export const queryMeter = async (meterId, from, to, granularity = 'PT1H', groupB
 };
 
 // ============ CUSTOMERS ============
-export const getCustomers = async () => {
+// Customers are served by the upstream OpenMeter API (v1) which returns the
+// full resource including email and usage attribution.
+export const getCustomers = async (params = {}) => {
   try {
-    const response = await api.get('/openmeter/customers');
+    const response = await api.get('/v1/customers', { params });
     return { 
       data: extractData(response), 
       total: getTotal(response.data) 
@@ -121,7 +137,7 @@ export const getCustomers = async () => {
 
 export const createCustomer = async (customerData) => {
   try {
-    const response = await api.post('/openmeter/customers', customerData);
+    const response = await api.post('/v1/customers', customerData);
     return response.data;
   } catch (error) {
     console.error('Error creating customer:', error);
@@ -131,7 +147,7 @@ export const createCustomer = async (customerData) => {
 
 export const updateCustomer = async (customerId, customerData) => {
   try {
-    const response = await api.put(`/openmeter/customers/${customerId}`, customerData);
+    const response = await api.put(`/v1/customers/${customerId}`, customerData);
     return response.data;
   } catch (error) {
     console.error('Error updating customer:', error);
@@ -141,30 +157,20 @@ export const updateCustomer = async (customerId, customerData) => {
 
 export const deleteCustomer = async (customerId) => {
   try {
-    await api.delete(`/openmeter/customers/${customerId}`);
+    await api.delete(`/v1/customers/${customerId}`);
   } catch (error) {
     console.error('Error deleting customer:', error);
     throw error;
   }
 };
 
-export const getCustomerBilling = async (customerId) => {
-  try {
-    const response = await api.get(`/openmeter/customers/${customerId}/billing`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching customer billing:', error);
-    throw error;
-  }
-};
-
 // ============ FEATURES ============
-export const getFeatures = async () => {
+export const getFeatures = async (params = {}) => {
   try {
-    const response = await api.get('/openmeter/features');
-    return { 
-      data: extractData(response), 
-      total: getTotal(response.data) 
+    const response = await api.get('/v1/features', { params: { pageSize: 100, ...params } });
+    return {
+      data: extractData(response),
+      total: getTotal(response.data),
     };
   } catch (error) {
     console.error('Error fetching features:', error);
@@ -174,7 +180,7 @@ export const getFeatures = async () => {
 
 export const createFeature = async (featureData) => {
   try {
-    const response = await api.post('/openmeter/features', featureData);
+    const response = await api.post('/v1/features', featureData);
     return response.data;
   } catch (error) {
     console.error('Error creating feature:', error);
@@ -184,7 +190,7 @@ export const createFeature = async (featureData) => {
 
 export const deleteFeature = async (featureId) => {
   try {
-    await api.delete(`/openmeter/features/${featureId}`);
+    await api.delete(`/v1/features/${featureId}`);
   } catch (error) {
     console.error('Error deleting feature:', error);
     throw error;
@@ -220,9 +226,12 @@ export const getEvents = async (params = {}) => {
 };
 
 // ============ INVOICES ============
+// Billing operations use the upstream OpenMeter API (v1). The API gateway only
+// exposes a read-only view of invoices, so write operations (generate invoice,
+// approve, void, pending lines) must hit the upstream directly.
 export const getInvoices = async (params = {}) => {
   try {
-    const response = await api.get('/openmeter/billing/invoices', { params });
+    const response = await api.get('/v1/billing/invoices', { params });
     return { 
       data: extractData(response), 
       total: getTotal(response.data) 
@@ -233,9 +242,16 @@ export const getInvoices = async (params = {}) => {
   }
 };
 
+// Fetch invoices for a specific customer (filtered server-side)
+export const getCustomerInvoices = async (customerId, params = {}) => {
+  return getInvoices({ ...params, customers: customerId, expand: 'lines' });
+};
+
 export const getInvoice = async (invoiceId) => {
   try {
-    const response = await api.get(`/openmeter/billing/invoices/${invoiceId}`);
+    const response = await api.get(`/v1/billing/invoices/${invoiceId}`, {
+      params: { expand: 'lines' },
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching invoice:', error);
@@ -245,7 +261,7 @@ export const getInvoice = async (invoiceId) => {
 
 export const deleteInvoice = async (invoiceId) => {
   try {
-    await api.delete(`/openmeter/billing/invoices/${invoiceId}`);
+    await api.delete(`/v1/billing/invoices/${invoiceId}`);
   } catch (error) {
     console.error('Error deleting invoice:', error);
     throw error;
@@ -254,7 +270,7 @@ export const deleteInvoice = async (invoiceId) => {
 
 export const advanceInvoice = async (invoiceId) => {
   try {
-    const response = await api.post(`/openmeter/billing/invoices/${invoiceId}/advance`);
+    const response = await api.post(`/v1/billing/invoices/${invoiceId}/advance`);
     return response.data;
   } catch (error) {
     console.error('Error advancing invoice:', error);
@@ -262,16 +278,124 @@ export const advanceInvoice = async (invoiceId) => {
   }
 };
 
-// ============ PLANS ============
-export const getPlans = async () => {
+// Send the invoice to the customer (approve + start payment workflow)
+export const approveInvoice = async (invoiceId) => {
   try {
-    const response = await api.get('/openmeter/plans');
-    return { 
-      data: extractData(response), 
-      total: getTotal(response.data) 
+    const response = await api.post(`/v1/billing/invoices/${invoiceId}/approve`);
+    return response.data;
+  } catch (error) {
+    console.error('Error approving invoice:', error);
+    throw error;
+  }
+};
+
+// Void an already issued invoice
+export const voidInvoice = async (invoiceId) => {
+  try {
+    const response = await api.post(`/v1/billing/invoices/${invoiceId}/void`);
+    return response.data;
+  } catch (error) {
+    console.error('Error voiding invoice:', error);
+    throw error;
+  }
+};
+
+// "Call" an invoice for a specific customer from their pending line items.
+// Returns an array of created invoices (one per currency).
+export const invoiceCustomer = async (customerId) => {
+  try {
+    const response = await api.post('/v1/billing/invoices/invoice', { customerId });
+    const created = Array.isArray(response.data) ? response.data : [response.data].filter(Boolean);
+    return created;
+  } catch (error) {
+    console.error('Error invoicing customer:', error);
+    throw error;
+  }
+};
+
+// Add a pending line item (charge) to a customer so it can be invoiced later.
+export const createPendingLine = async (customerId, currency, lines) => {
+  try {
+    const response = await api.post(
+      `/v1/billing/customers/${customerId}/invoices/pending-lines`,
+      { currency, lines }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error creating pending line:', error);
+    throw error;
+  }
+};
+
+// ============ PLANS ============
+export const getPlans = async (params = {}) => {
+  try {
+    const response = await api.get('/v1/plans', { params: { pageSize: 100, ...params } });
+    return {
+      data: extractData(response),
+      total: getTotal(response.data),
     };
   } catch (error) {
     console.error('Error fetching plans:', error);
+    throw error;
+  }
+};
+
+export const getPlan = async (planIdOrKey) => {
+  try {
+    const response = await api.get(`/v1/plans/${planIdOrKey}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching plan:', error);
+    throw error;
+  }
+};
+
+export const createPlan = async (planData) => {
+  try {
+    const response = await api.post('/v1/plans', planData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating plan:', error);
+    throw error;
+  }
+};
+
+export const updatePlan = async (planId, planData) => {
+  try {
+    const response = await api.put(`/v1/plans/${planId}`, planData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating plan:', error);
+    throw error;
+  }
+};
+
+export const publishPlan = async (planId) => {
+  try {
+    const response = await api.post(`/v1/plans/${planId}/publish`);
+    return response.data;
+  } catch (error) {
+    console.error('Error publishing plan:', error);
+    throw error;
+  }
+};
+
+export const archivePlan = async (planId) => {
+  try {
+    const response = await api.post(`/v1/plans/${planId}/archive`);
+    return response.data;
+  } catch (error) {
+    console.error('Error archiving plan:', error);
+    throw error;
+  }
+};
+
+export const deletePlan = async (planId) => {
+  try {
+    await api.delete(`/v1/plans/${planId}`);
+  } catch (error) {
+    console.error('Error deleting plan:', error);
     throw error;
   }
 };
@@ -280,12 +404,22 @@ export const getPlans = async () => {
 export const getSubscriptions = async () => {
   try {
     const response = await api.get('/openmeter/subscriptions');
-    return { 
-      data: extractData(response), 
-      total: getTotal(response.data) 
+    return {
+      data: extractData(response),
+      total: getTotal(response.data),
     };
   } catch (error) {
     console.error('Error fetching subscriptions:', error);
+    throw error;
+  }
+};
+
+export const createSubscription = async (subscriptionData) => {
+  try {
+    const response = await api.post('/v1/subscriptions', subscriptionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating subscription:', error);
     throw error;
   }
 };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Send, RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { sendEvent } from '../api/openmeter';
+import SearchableSelect from './SearchableSelect';
 
 const SendEvent = () => {
   const [loading, setLoading] = useState(false);
@@ -136,16 +137,12 @@ const SendEvent = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Method
             </label>
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <SearchableSelect
+              label="Method"
               value={eventData.method}
-              onChange={(e) => setEventData({ ...eventData, method: e.target.value })}
-            >
-              <option value="GET">GET</option>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-              <option value="DELETE">DELETE</option>
-            </select>
+              onChange={(v) => setEventData({ ...eventData, method: v })}
+              options={['GET', 'POST', 'PUT', 'DELETE'].map((m) => ({ value: m, label: m }))}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
