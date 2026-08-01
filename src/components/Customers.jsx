@@ -5,6 +5,7 @@ import { getCustomers, createCustomer, updateCustomer, deleteCustomer, invoiceCu
 import { describeInvoiceError, hasSubscription } from '../utils/billing';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
+import { useConfirm } from '../hooks/useConfirm';
 
 const EMPTY_FORM = { key: '', name: '', primaryEmail: '', currency: '', subjects: '' };
 
@@ -26,6 +27,7 @@ const Customers = () => {
   const [subscribing, setSubscribing] = useState(false);
   const [subscribePlanKey, setSubscribePlanKey] = useState('');
   const [alignCurrency, setAlignCurrency] = useState(true);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const [changingCustomer, setChangingCustomer] = useState(null);
   const [changing, setChanging] = useState(false);
@@ -86,10 +88,19 @@ const Customers = () => {
   };
 
   const handleDelete = async (id) => {
-    if (confirm('Delete this customer?')) {
-      try { await deleteCustomer(id); fetchCustomers(); }
-      catch (error) { setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete customer' }); }
-    }
+    try {
+      await requestConfirm({
+        title: 'Delete customer',
+        message: 'Delete this customer? This cannot be undone.',
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        icon: Trash2,
+        action: async () => {
+          await deleteCustomer(id);
+          fetchCustomers();
+        },
+      });
+    } catch (error) { setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete customer' }); }
   };
 
   const handleEdit = (customer) => {
@@ -202,16 +213,23 @@ const Customers = () => {
   };
 
   const handleGenerateInvoice = async (customer) => {
-    if (!window.confirm(`Generate an invoice for "${customer.name}" from their pending line items?`)) return;
     setInvoicingId(customer.id);
     setMessage(null);
     try {
-      const created = await invoiceCustomer(customer.id);
-      setMessage({
-        type: 'success',
-        text: created.length
-          ? `Invoice created for ${customer.name} (${created.map((i) => i.number || i.id).join(', ')}).`
-          : `Invoice created for ${customer.name}.`,
+      await requestConfirm({
+        title: 'Generate invoice',
+        message: `Generate an invoice for "${customer.name}" from their pending line items?`,
+        confirmLabel: 'Generate',
+        icon: Receipt,
+        action: async () => {
+          const created = await invoiceCustomer(customer.id);
+          setMessage({
+            type: 'success',
+            text: created.length
+              ? `Invoice created for ${customer.name} (${created.map((i) => i.number || i.id).join(', ')}).`
+              : `Invoice created for ${customer.name}.`,
+          });
+        },
       });
     } catch (error) {
       const info = describeInvoiceError(error, customer);
@@ -545,6 +563,7 @@ const Customers = () => {
           </div>
         </div>
       )}
+      {confirmDialog}
 
       {/* Change plan modal */}
       {changingCustomer && (

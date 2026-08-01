@@ -3,6 +3,7 @@ import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle, Layers } from 'lucid
 import { getFeatures, createFeature, deleteFeature, getMeters } from '../api/openmeter';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
+import { useConfirm } from '../hooks/useConfirm';
 
 const EMPTY_FORM = { key: '', name: '', meterSlug: '' };
 
@@ -14,6 +15,7 @@ const Features = () => {
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
   const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const fetchFeatures = useCallback(async () => {
     setLoading(true);
@@ -50,11 +52,19 @@ const Features = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this feature?')) return;
     try {
-      await deleteFeature(id);
-      setMessage({ type: 'success', text: 'Feature deleted.' });
-      fetchFeatures();
+      await requestConfirm({
+        title: 'Delete feature',
+        message: 'Delete this feature? This cannot be undone.',
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        icon: Trash2,
+        action: async () => {
+          await deleteFeature(id);
+          setMessage({ type: 'success', text: 'Feature deleted.' });
+          fetchFeatures();
+        },
+      });
     } catch (error) {
       setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete feature' });
     }
@@ -194,6 +204,7 @@ const Features = () => {
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 };

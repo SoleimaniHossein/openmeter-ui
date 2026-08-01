@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 let API_TOKEN = localStorage.getItem('openmeter_token') || '';
-// Use relative path - goes through Vite proxy
-const API_BASE_URL = '/api';
+// Use relative path by default (goes through Vite proxy). Can be overridden
+// with VITE_API_BASE_URL for direct/backend access or production builds.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -289,13 +290,42 @@ export const approveInvoice = async (invoiceId) => {
   }
 };
 
-// Void an already issued invoice
-export const voidInvoice = async (invoiceId) => {
+// Void an already issued invoice.
+// The API requires a body: a reason plus the action on the line items.
+export const voidInvoice = async (invoiceId, { reason = 'Voided by user', percentage = 100 } = {}) => {
   try {
-    const response = await api.post(`/v1/billing/invoices/${invoiceId}/void`);
+    const response = await api.post(`/v1/billing/invoices/${invoiceId}/void`, {
+      reason,
+      action: {
+        percentage,
+        action: { type: 'discard' },
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Error voiding invoice:', error);
+    throw error;
+  }
+};
+
+// Retry a failed invoice issuing/payment step.
+export const retryInvoice = async (invoiceId) => {
+  try {
+    const response = await api.post(`/v1/billing/invoices/${invoiceId}/retry`);
+    return response.data;
+  } catch (error) {
+    console.error('Error retrying invoice:', error);
+    throw error;
+  }
+};
+
+// Snapshot the current usage quantities into the usage-based line items of a draft invoice.
+export const snapshotQuantitiesInvoice = async (invoiceId) => {
+  try {
+    const response = await api.post(`/v1/billing/invoices/${invoiceId}/snapshot-quantities`);
+    return response.data;
+  } catch (error) {
+    console.error('Error snapshotting invoice quantities:', error);
     throw error;
   }
 };
@@ -387,6 +417,18 @@ export const archivePlan = async (planId) => {
     return response.data;
   } catch (error) {
     console.error('Error archiving plan:', error);
+    throw error;
+  }
+};
+
+// Create the next draft version of a plan (used to edit published plans without
+// affecting running subscriptions). Returns the new draft version.
+export const createNextPlanVersion = async (planIdOrKey) => {
+  try {
+    const response = await api.post(`/v1/plans/${planIdOrKey}/next`);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating plan version:', error);
     throw error;
   }
 };

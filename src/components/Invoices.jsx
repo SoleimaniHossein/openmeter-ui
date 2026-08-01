@@ -7,6 +7,7 @@ import LoadingSpinner from './LoadingSpinner';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import InvoiceDetail from './InvoiceDetail';
 import SearchableSelect from './SearchableSelect';
+import { useConfirm } from '../hooks/useConfirm';
 
 const STATUS_FILTERS = [
   { label: 'All statuses', value: '' },
@@ -16,6 +17,7 @@ const STATUS_FILTERS = [
   { label: 'Issued', value: 'issued' },
   { label: 'Payment processing', value: 'payment_processing' },
   { label: 'Overdue', value: 'overdue' },
+  { label: 'Uncollectible', value: 'uncollectible' },
   { label: 'Paid', value: 'paid' },
   { label: 'Voided', value: 'voided' },
 ];
@@ -33,10 +35,13 @@ const Invoices = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState(urlCustomer);
-  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
+  const [statusFilter, setStatusFilter] = useState(
+    (searchParams.get('status') || '').split(',').filter(Boolean)
+  );
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [invoicing, setInvoicing] = useState(false);
   const [message, setMessage] = useState(null);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
@@ -44,7 +49,7 @@ const Invoices = () => {
     try {
       const params = { pageSize: 100, expand: 'lines' };
       if (selectedCustomer) params.customers = selectedCustomer;
-      if (statusFilter) params.statuses = statusFilter;
+      if (statusFilter.length) params.statuses = statusFilter;
       const res = await getInvoices(params);
       setInvoices(res.data || []);
     } catch (error) {
@@ -69,28 +74,35 @@ const Invoices = () => {
   useEffect(() => {
     const next = {};
     if (selectedCustomer) next.customer = selectedCustomer;
-    if (statusFilter) next.status = statusFilter;
+    if (statusFilter.length) next.status = statusFilter.join(',');
     setSearchParams(next, { replace: true });
   }, [selectedCustomer, statusFilter, setSearchParams]);
 
-  const handleGenerateInvoice = async () => {
-    if (!selectedCustomer) {
+  const handleGenerateInvoice = async (customerId = selectedCustomer) => {
+    if (!customerId) {
       setMessage({ type: 'error', text: 'Select a customer to invoice first.' });
       return;
     }
-    const customer = customers.find((c) => c.id === selectedCustomer);
-    if (!window.confirm(`Generate an invoice for "${customer?.name || selectedCustomer}" from their pending line items?`)) return;
+    const customer = customers.find((c) => c.id === customerId);
     setInvoicing(true);
     setMessage(null);
     try {
-      const created = await invoiceCustomer(selectedCustomer);
-      setMessage({
-        type: 'success',
-        text: created.length
-          ? `Invoice created (${created.map((i) => i.number || i.id).join(', ')}).`
-          : 'Invoice created successfully.',
+      await requestConfirm({
+        title: 'Generate invoice',
+        message: `Generate an invoice for "${customer?.name || customerId}" from their pending line items?`,
+        confirmLabel: 'Generate',
+        icon: Receipt,
+        action: async () => {
+          const created = await invoiceCustomer(customerId);
+          await fetchInvoices();
+          setMessage({
+            type: 'success',
+            text: created.length
+              ? `Invoice created (${created.map((i) => i.number || i.id).join(', ')}).`
+              : 'Invoice created successfully.',
+          });
+        },
       });
-      await fetchInvoices();
     } catch (error) {
       const info = describeInvoiceError(error, customer);
       let action = null;
@@ -235,9 +247,10 @@ const Invoices = () => {
           <div>
             <SearchableSelect
               label="Status"
+              multiple
               value={statusFilter}
               onChange={setStatusFilter}
-              options={STATUS_FILTERS.map((s) => ({ value: s.value, label: s.label }))}
+              options={STATUS_FILTERS.filter((s) => s.value !== '').map((s) => ({ value: s.value, label: s.label }))}
               placeholder="All statuses"
             />
           </div>
@@ -296,7 +309,16 @@ const Invoices = () => {
                     <td className="px-6 py-4 font-semibold text-slate-900 text-right">{formatMoney(inv.totals?.total, inv.currency)}</td>
                     <td className="px-6 py-4"><InvoiceStatusBadge status={inv.status} extendedStatus={inv.statusDetails?.extendedStatus} /></td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end gap-2">
+                        {inv.status === 'gathering' && (
+                          <button
+                            onClick={() => handleGenerateInvoice(inv.customer?.id)}
+                            disabled={invoicing}
+                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition disabled:opacity-50"
+                          >
+                            <FileText className="w-4 h-4 mr-1" /> Finalize
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedInvoice(inv)}
                           className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition"
@@ -316,6 +338,7 @@ const Invoices = () => {
       {selectedInvoice && (
         <InvoiceDetail invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} onChanged={fetchInvoices} />
       )}
+      {confirmDialog}
     </div>
   );
 };

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, RefreshCw, ArrowRight, Send, Trash2, Ban, AlertCircle } from 'lucide-react';
+import { X, RefreshCw, ArrowRight, Send, Trash2, Ban, AlertCircle, FileText, RotateCcw, Camera } from 'lucide-react';
 import { format, isValid } from 'date-fns';
-import { advanceInvoice, approveInvoice, deleteInvoice, voidInvoice, getInvoice } from '../api/openmeter';
+import { advanceInvoice, approveInvoice, deleteInvoice, voidInvoice, retryInvoice, snapshotQuantitiesInvoice, invoiceCustomer, getInvoice } from '../api/openmeter';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
+import { useConfirm } from '../hooks/useConfirm';
 
 const formatMoney = (value, currency = 'USD') => {
   const num = Number(value || 0);
@@ -48,25 +49,32 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [action, setAction] = useState(null);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const available = invoice?.statusDetails?.availableActions || {};
   const currency = invoice?.currency || 'USD';
   const totals = invoice?.totals || {};
   const lines = invoice?.lines || [];
 
-  const runAction = async (type, fn, confirmMsg) => {
-    if (confirmMsg && !window.confirm(confirmMsg)) return;
-    setAction(type);
-    setError(null);
-    try {
-      const updated = await fn(invoice.id);
-      if (type === 'delete') {
+  const runAction = async (type, fn, confirmOpts) => {
+    const doRun = async (value) => {
+      const updated = await fn(invoice.id, value);
+      if (type === 'delete' || type === 'invoice') {
         onClose();
         if (onChanged) onChanged();
         return;
       }
       if (updated) setInvoice(updated);
       if (onChanged) onChanged();
+    };
+    setAction(type);
+    setError(null);
+    try {
+      if (confirmOpts) {
+        await requestConfirm({ ...confirmOpts, action: doRun });
+      } else {
+        await doRun(true);
+      }
     } catch (err) {
       setError(err?.response?.data?.detail || err.message || 'Action failed');
     } finally {
@@ -88,6 +96,7 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
   };
 
   return (
+    <>
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
@@ -219,6 +228,23 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
             <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </button>
           <div className="flex flex-wrap gap-2">
+            {available.invoice && (
+              <ActionButton
+                onClick={() => runAction('invoice', async () => {
+                  if (!invoice.customer?.id) throw new Error('No customer associated with this gathering invoice.');
+                  await invoiceCustomer(invoice.customer.id);
+                }, {
+                  title: 'Finalize gathering invoice',
+                  message: 'Turn the pending usage lines into a draft invoice?',
+                  confirmLabel: 'Finalize',
+                  icon: FileText,
+                })}
+                loading={action === 'invoice'}
+                icon={FileText}
+                label="Finalize"
+                color="bg-indigo-600 text-white hover:bg-indigo-700"
+              />
+            )}
             {available.advance && (
               <ActionButton
                 onClick={() => runAction('advance', advanceInvoice)}
@@ -228,18 +254,57 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
                 color="bg-indigo-600 text-white hover:bg-indigo-700"
               />
             )}
+            {available.snapshotQuantities && (
+              <ActionButton
+                onClick={() => runAction('snapshotQuantities', snapshotQuantitiesInvoice, {
+                  title: 'Snapshot quantities',
+                  message: 'Capture the current usage quantities into this draft invoice?',
+                  confirmLabel: 'Snapshot',
+                  icon: Camera,
+                })}
+                loading={action === 'snapshotQuantities'}
+                icon={Camera}
+                label="Snapshot Usage"
+                color="bg-slate-700 text-white hover:bg-slate-800"
+              />
+            )}
             {available.approve && (
               <ActionButton
-                onClick={() => runAction('approve', approveInvoice, 'Send this invoice to the customer?')}
+                onClick={() => runAction('approve', approveInvoice, {
+                  title: 'Send invoice',
+                  message: 'Send this invoice to the customer?',
+                  confirmLabel: 'Send',
+                  icon: Send,
+                })}
                 loading={action === 'approve'}
                 icon={Send}
                 label="Send to Customer"
                 color="bg-emerald-600 text-white hover:bg-emerald-700"
               />
             )}
+            {available.retry && (
+              <ActionButton
+                onClick={() => runAction('retry', retryInvoice, {
+                  title: 'Retry invoice',
+                  message: 'Retry the failed issuing step?',
+                  confirmLabel: 'Retry',
+                  icon: RotateCcw,
+                })}
+                loading={action === 'retry'}
+                icon={RotateCcw}
+                label="Retry"
+                color="bg-amber-600 text-white hover:bg-amber-700"
+              />
+            )}
             {available.delete && (
               <ActionButton
-                onClick={() => runAction('delete', deleteInvoice, 'Delete this draft invoice?')}
+                onClick={() => runAction('delete', deleteInvoice, {
+                  title: 'Delete invoice',
+                  message: 'Delete this draft invoice?',
+                  confirmLabel: 'Delete',
+                  variant: 'danger',
+                  icon: Trash2,
+                })}
                 loading={action === 'delete'}
                 icon={Trash2}
                 label="Delete"
@@ -248,7 +313,15 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
             )}
             {available.void && (
               <ActionButton
-                onClick={() => runAction('void', voidInvoice, 'Void this invoice?')}
+                onClick={() => runAction('void', (id, reason) => voidInvoice(id, { reason }), {
+                  title: 'Void invoice',
+                  message: 'Void this invoice? The line items will be discarded.',
+                  confirmLabel: 'Void',
+                  variant: 'danger',
+                  icon: Ban,
+                  inputLabel: 'Reason',
+                  inputPlaceholder: 'e.g. Customer requested cancellation',
+                })}
                 loading={action === 'void'}
                 icon={Ban}
                 label="Void"
@@ -258,7 +331,9 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      {confirmDialog}
+    </>
   );
 };
 

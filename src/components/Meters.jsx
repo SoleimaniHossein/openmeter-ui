@@ -3,6 +3,7 @@ import { Plus, RefreshCw, Edit2, Trash2, Eye, AlertCircle, CheckCircle, Activity
 import { getMeters, createMeter, updateMeter, deleteMeter, queryMeter } from '../api/openmeter';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
+import { useConfirm } from '../hooks/useConfirm';
 
 const AGGREGATIONS = ['SUM', 'COUNT', 'UNIQUE_COUNT', 'AVG', 'MIN', 'MAX', 'LATEST'];
 
@@ -27,6 +28,7 @@ const Meters = () => {
   const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
   const [viewingUsage, setViewingUsage] = useState(null);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const fetchMeters = useCallback(async () => {
     setLoading(true);
@@ -80,11 +82,19 @@ const Meters = () => {
   };
 
   const handleDelete = async (meter) => {
-    if (!confirm(`Delete meter "${meter.name}"?`)) return;
     try {
-      await deleteMeter(meter.slug || meter.id);
-      setMessage({ type: 'success', text: 'Meter deleted.' });
-      fetchMeters();
+      await requestConfirm({
+        title: 'Delete meter',
+        message: `Delete meter "${meter.name}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        icon: Trash2,
+        action: async () => {
+          await deleteMeter(meter.slug || meter.id);
+          setMessage({ type: 'success', text: 'Meter deleted.' });
+          fetchMeters();
+        },
+      });
     } catch (error) {
       setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete meter' });
     }
@@ -389,6 +399,7 @@ const Meters = () => {
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 };

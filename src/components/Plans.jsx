@@ -1,13 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle, Rocket, Archive, Layers, Package, X, Edit2 } from 'lucide-react';
-import { getPlans, createPlan, updatePlan, publishPlan, archivePlan, deletePlan, getFeatures } from '../api/openmeter';
+import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle, Rocket, Archive, Layers, Package, X, Edit2, GitBranch } from 'lucide-react';
+import { getPlans, createPlan, updatePlan, publishPlan, archivePlan, deletePlan, createNextPlanVersion, getFeatures } from '../api/openmeter';
 import SearchableSelect from './SearchableSelect';
 import LoadingSpinner from './LoadingSpinner';
+import { useConfirm } from '../hooks/useConfirm';
 
 const CADENCES = [
   { value: 'P1M', label: 'Monthly (P1M)' },
   { value: 'P3M', label: 'Quarterly (P3M)' },
   { value: 'P1Y', label: 'Annual (P1Y)' },
+];
+
+const DURATIONS = [
+  { value: '', label: 'Entire term' },
+  { value: 'P1W', label: '1 week (P1W)' },
+  { value: 'P2W', label: '2 weeks (P2W)' },
+  { value: 'P1M', label: '1 month (P1M)' },
+  { value: 'P3M', label: '3 months (P3M)' },
+  { value: 'P1Y', label: '1 year (P1Y)' },
 ];
 
 const MODELS = [
@@ -36,20 +46,27 @@ const emptyRateCard = () => ({
   tiers: [{ upToAmount: '', unitPrice: '', flatPrice: '' }],
 });
 
+const emptyPhase = () => ({
+  key: 'default',
+  name: 'Default',
+  duration: '',
+  rateCards: [emptyRateCard()],
+});
+
 const EMPTY_FORM = {
   key: '',
   name: '',
+  description: '',
   currency: 'USD',
   billingCadence: 'P1M',
-  phaseKey: 'default',
-  phaseName: 'Default',
-  rateCards: [emptyRateCard()],
+  phases: [emptyPhase()],
 };
 
 const getStatusBadge = (status) => {
   const map = {
     active: 'bg-emerald-50 text-emerald-700',
     draft: 'bg-slate-100 text-slate-600',
+    scheduled: 'bg-sky-100 text-sky-700',
     archived: 'bg-amber-50 text-amber-700',
   };
   return map[status] || 'bg-slate-100 text-slate-600';
@@ -129,6 +146,7 @@ const Plans = () => {
   const [formData, setFormData] = useState(JSON.parse(JSON.stringify(EMPTY_FORM)));
   const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const fetchPlans = useCallback(async () => {
     setLoading(true);
@@ -149,21 +167,80 @@ const Plans = () => {
       .catch(() => {});
   }, [fetchPlans]);
 
-  const setRateCard = (index, field, value) => {
+  const setPhase = (phaseIdx, field, value) => {
     setFormData((prev) => {
-      const rateCards = [...prev.rateCards];
-      rateCards[index] = { ...rateCards[index], [field]: value };
-      return { ...prev, rateCards };
+      const phases = [...prev.phases];
+      phases[phaseIdx] = { ...phases[phaseIdx], [field]: value };
+      return { ...prev, phases };
     });
   };
 
-  const setTier = (rcIndex, tierIndex, field, value) => {
+  const setRateCard = (phaseIdx, index, field, value) => {
     setFormData((prev) => {
-      const rateCards = [...prev.rateCards];
+      const phases = [...prev.phases];
+      const rateCards = [...(phases[phaseIdx].rateCards || [])];
+      rateCards[index] = { ...rateCards[index], [field]: value };
+      phases[phaseIdx] = { ...phases[phaseIdx], rateCards };
+      return { ...prev, phases };
+    });
+  };
+
+  const setTier = (phaseIdx, rcIndex, tierIndex, field, value) => {
+    setFormData((prev) => {
+      const phases = [...prev.phases];
+      const rateCards = [...(phases[phaseIdx].rateCards || [])];
       const tiers = [...(rateCards[rcIndex].tiers || [])];
       tiers[tierIndex] = { ...tiers[tierIndex], [field]: value };
       rateCards[rcIndex] = { ...rateCards[rcIndex], tiers };
-      return { ...prev, rateCards };
+      phases[phaseIdx] = { ...phases[phaseIdx], rateCards };
+      return { ...prev, phases };
+    });
+  };
+
+  const addPhase = () => {
+    setFormData((prev) => ({ ...prev, phases: [...prev.phases, emptyPhase()] }));
+  };
+
+  const removePhase = (phaseIdx) => {
+    setFormData((prev) => {
+      const phases = prev.phases.filter((_, idx) => idx !== phaseIdx);
+      return { ...prev, phases: phases.length ? phases : [emptyPhase()] };
+    });
+  };
+
+  const addRateCard = (phaseIdx) => {
+    setFormData((prev) => {
+      const phases = [...prev.phases];
+      phases[phaseIdx] = { ...phases[phaseIdx], rateCards: [...(phases[phaseIdx].rateCards || []), emptyRateCard()] };
+      return { ...prev, phases };
+    });
+  };
+
+  const removeRateCard = (phaseIdx, index) => {
+    setFormData((prev) => {
+      const phases = [...prev.phases];
+      phases[phaseIdx] = { ...phases[phaseIdx], rateCards: phases[phaseIdx].rateCards.filter((_, idx) => idx !== index) };
+      return { ...prev, phases };
+    });
+  };
+
+  const removeTier = (phaseIdx, rcIndex, tierIndex) => {
+    setFormData((prev) => {
+      const phases = [...prev.phases];
+      const rateCards = [...(phases[phaseIdx].rateCards || [])];
+      rateCards[rcIndex] = { ...rateCards[rcIndex], tiers: rateCards[rcIndex].tiers.filter((_, idx) => idx !== tierIndex) };
+      phases[phaseIdx] = { ...phases[phaseIdx], rateCards };
+      return { ...prev, phases };
+    });
+  };
+
+  const addTier = (phaseIdx, rcIndex) => {
+    setFormData((prev) => {
+      const phases = [...prev.phases];
+      const rateCards = [...(phases[phaseIdx].rateCards || [])];
+      rateCards[rcIndex] = { ...rateCards[rcIndex], tiers: [...(rateCards[rcIndex].tiers || []), { upToAmount: '', unitPrice: '', flatPrice: '' }] };
+      phases[phaseIdx] = { ...phases[phaseIdx], rateCards };
+      return { ...prev, phases };
     });
   };
 
@@ -171,28 +248,27 @@ const Plans = () => {
     setSaving(true);
     setMessage(null);
     try {
-      const rateCards = formData.rateCards
-        .filter((rc) => rc.name || rc.featureKey)
-        .map((rc) => buildRateCard(rc, formData.billingCadence));
+      const phases = formData.phases.map((ph) => ({
+        key: ph.key || 'default',
+        name: ph.name || 'Default',
+        duration: ph.duration || null,
+        rateCards: (ph.rateCards || [])
+          .filter((rc) => rc.name || rc.featureKey)
+          .map((rc) => buildRateCard(rc, formData.billingCadence)),
+      }));
 
       const payload = {
         key: formData.key,
         name: formData.name,
+        ...(formData.description ? { description: formData.description } : {}),
         currency: formData.currency.toUpperCase(),
         billingCadence: formData.billingCadence,
-        phases: [
-          {
-            key: formData.phaseKey,
-            name: formData.phaseName,
-            duration: null,
-            rateCards,
-          },
-        ],
+        phases,
       };
 
       if (editingPlan) {
         await updatePlan(editingPlan.id, payload);
-        setMessage({ type: 'success', text: `Plan "${payload.name}" updated.` });
+        setMessage({ type: 'success', text: `Plan "${payload.name}" v${editingPlan.version} updated.` });
       } else {
         const created = await createPlan(payload);
         setMessage({
@@ -213,50 +289,96 @@ const Plans = () => {
   };
 
   const handlePublish = async (plan) => {
-    if (!confirm(`Publish "${plan.name}"? It becomes available for subscriptions.`)) return;
     try {
-      await publishPlan(plan.id);
-      setMessage({ type: 'success', text: `Plan "${plan.name}" published.` });
-      fetchPlans();
+      await requestConfirm({
+        title: 'Publish plan',
+        message: `Publish "${plan.name}" v${plan.version}? It becomes available for subscriptions and archives the previous active version.`,
+        confirmLabel: 'Publish',
+        icon: Rocket,
+        action: async () => {
+          await publishPlan(plan.id);
+          setMessage({ type: 'success', text: `Plan "${plan.name}" v${plan.version} published.` });
+          fetchPlans();
+        },
+      });
     } catch (error) {
       setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to publish plan' });
     }
   };
 
   const handleArchive = async (plan) => {
-    if (!confirm(`Archive "${plan.name}"?`)) return;
     try {
-      await archivePlan(plan.id);
-      setMessage({ type: 'success', text: `Plan "${plan.name}" archived.` });
-      fetchPlans();
+      await requestConfirm({
+        title: 'Archive plan',
+        message: `Archive "${plan.name}" v${plan.version}? It will no longer be available for new subscriptions.`,
+        confirmLabel: 'Archive',
+        icon: Archive,
+        action: async () => {
+          await archivePlan(plan.id);
+          setMessage({ type: 'success', text: `Plan "${plan.name}" v${plan.version} archived.` });
+          fetchPlans();
+        },
+      });
     } catch (error) {
       setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to archive plan' });
     }
   };
 
   const handleDelete = async (plan) => {
-    if (!confirm(`Delete "${plan.name}"?`)) return;
     try {
-      await deletePlan(plan.id);
-      setMessage({ type: 'success', text: `Plan "${plan.name}" deleted.` });
-      fetchPlans();
+      await requestConfirm({
+        title: 'Delete plan',
+        message: `Delete "${plan.name}" v${plan.version}? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        icon: Trash2,
+        action: async () => {
+          await deletePlan(plan.id);
+          setMessage({ type: 'success', text: `Plan "${plan.name}" deleted.` });
+          fetchPlans();
+        },
+      });
     } catch (error) {
       setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete plan' });
     }
   };
 
+  const handleNewVersion = async (plan) => {
+    try {
+      await requestConfirm({
+        title: 'Create new version',
+        message: `Create a new draft version of "${plan.name}" (v${plan.version + 1})? The current version stays in use until you publish the new one.`,
+        confirmLabel: 'Create version',
+        icon: GitBranch,
+        action: async () => {
+          const next = await createNextPlanVersion(plan.id);
+          setMessage({ type: 'success', text: `Created draft v${next.version} of "${next.name}". Edit it, then publish.` });
+          openEdit(next);
+          fetchPlans();
+        },
+      });
+    } catch (error) {
+      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to create new version' });
+    }
+  };
+
   const openEdit = (plan) => {
-    const phase = plan.phases?.[0];
-    const rateCards = (phase?.rateCards || []).map(fromRateCard);
+    const phases = (plan.phases || []).length
+      ? plan.phases.map((ph) => ({
+          key: ph.key || 'default',
+          name: ph.name || 'Default',
+          duration: ph.duration || '',
+          rateCards: (ph.rateCards || []).map(fromRateCard),
+        }))
+      : [emptyPhase()];
     setEditingPlan(plan);
     setFormData({
       key: plan.key,
       name: plan.name,
+      description: plan.description || '',
       currency: plan.currency || 'USD',
       billingCadence: plan.billingCadence || 'P1M',
-      phaseKey: phase?.key || 'default',
-      phaseName: phase?.name || 'Default',
-      rateCards: rateCards.length ? rateCards : [emptyRateCard()],
+      phases,
     });
     setShowModal(true);
   };
@@ -299,9 +421,10 @@ const Plans = () => {
       <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm">
         <Package className="w-4 h-4 mt-0.5 flex-shrink-0" />
         <p>
-          A <strong>plan</strong> defines rate cards for features. Rate cards support flat fees (one-time
-          or recurring), per-unit, tiered (graduated/volume), package and dynamic pricing. Plans must be{' '}
-          <strong>published</strong> before they can be used.
+          A <strong>plan</strong> bundles <strong>rate cards</strong> (flat fee, per-unit, tiered,
+          package, dynamic) grouped into <strong>phases</strong> (trials, ramps). Plans are{' '}
+          <strong>versioned</strong> — editing a published plan creates a new draft version; publishing
+          it makes it active and archives the previous one.
         </p>
       </div>
 
@@ -324,6 +447,7 @@ const Plans = () => {
                     <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(p.status)}`}>{p.status}</span>
                   </div>
                 </div>
+                {p.description && <p className="text-xs text-slate-500 mt-2">{p.description}</p>}
                 <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
                   <span className="inline-flex px-2 py-0.5 rounded bg-slate-100 font-medium">{p.currency}</span>
                   <span className="inline-flex px-2 py-0.5 rounded bg-slate-100 font-mono">{p.billingCadence}</span>
@@ -332,11 +456,13 @@ const Plans = () => {
               </div>
 
               <div className="p-5 flex-1 space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Rate cards</p>
                 {!p.phases?.length && <p className="text-sm text-slate-400">No phases</p>}
                 {p.phases?.map((ph) => (
                   <div key={ph.id || ph.key}>
-                    <p className="text-xs font-medium text-slate-600 mb-2">{ph.name} {ph.duration ? `(${ph.duration})` : '(entire term)'}</p>
+                    <p className="text-xs font-medium text-slate-600 mb-2">
+                      <Layers className="w-3.5 h-3.5 inline mr-1 text-slate-400" />
+                      {ph.name} {ph.duration ? `(${ph.duration})` : '(entire term)'}
+                    </p>
                     {ph.rateCards?.length === 0 && <p className="text-xs text-slate-400">No rate cards</p>}
                     {ph.rateCards?.map((rc) => {
                       const model = rc.price?.type === 'flat' ? 'Flat fee' : (rc.price?.type || rc.type);
@@ -380,14 +506,6 @@ const Plans = () => {
                     <Rocket className="w-3.5 h-3.5 mr-1" /> Publish
                   </button>
                 )}
-                {p.status === 'active' && (
-                  <button
-                    onClick={() => handleArchive(p)}
-                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 transition"
-                  >
-                    <Archive className="w-3.5 h-3.5 mr-1" /> Archive
-                  </button>
-                )}
                 {p.status === 'draft' && (
                   <button
                     onClick={() => openEdit(p)}
@@ -396,12 +514,38 @@ const Plans = () => {
                     <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                   </button>
                 )}
-                <button
-                  onClick={() => handleDelete(p)}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition"
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
-                </button>
+                {p.status === 'active' && (
+                  <button
+                    onClick={() => handleNewVersion(p)}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition"
+                  >
+                    <GitBranch className="w-3.5 h-3.5 mr-1" /> Edit (new version)
+                  </button>
+                )}
+                {p.status === 'scheduled' && (
+                  <button
+                    onClick={() => openEdit(p)}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
+                  </button>
+                )}
+                {(p.status === 'active' || p.status === 'scheduled') && (
+                  <button
+                    onClick={() => handleArchive(p)}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 transition"
+                  >
+                    <Archive className="w-3.5 h-3.5 mr-1" /> Archive
+                  </button>
+                )}
+                {p.status !== 'active' && (
+                  <button
+                    onClick={() => handleDelete(p)}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+                  </button>
+                )}
               </div>
             </div>
           ))
@@ -413,7 +557,9 @@ const Plans = () => {
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h3 className="text-lg font-semibold text-slate-900">{editingPlan ? 'Edit' : 'Add'} Plan</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                {editingPlan ? `Edit ${editingPlan.name} v${editingPlan.version}` : 'Add Plan'}
+              </h3>
               <button onClick={() => setShowModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
@@ -459,224 +605,290 @@ const Plans = () => {
                     placeholder="Select cadence"
                   />
                 </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Description</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Optional description shown to customers"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div className="border-t border-slate-100 pt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Rate Cards</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Phases</label>
                   <button
-                    onClick={() => setFormData((prev) => ({ ...prev, rateCards: [...prev.rateCards, emptyRateCard()] }))}
+                    onClick={addPhase}
                     className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
                   >
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add rate card
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add phase
                   </button>
                 </div>
+                <p className="text-xs text-slate-400 mb-3">
+                  Phases run in order and create time-based offering changes (e.g. a trial, then the paid plan).
+                </p>
 
-                {formData.rateCards.map((rc, i) => (
-                  <div key={i} className="rounded-xl border border-slate-200 p-4 mb-3 space-y-3">
+                {formData.phases.map((ph, pi) => (
+                  <div key={pi} className="rounded-xl border border-slate-200 p-4 mb-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-500">Rate card {i + 1}</span>
-                      {formData.rateCards.length > 1 && (
+                      <span className="text-xs font-medium text-slate-500">Phase {pi + 1}</span>
+                      {formData.phases.length > 1 && (
                         <button
-                          onClick={() => setFormData((prev) => ({ ...prev, rateCards: prev.rateCards.filter((_, idx) => idx !== i) }))}
+                          onClick={() => removePhase(pi)}
                           className="p-1 text-red-500 hover:bg-red-50 rounded"
-                          title="Remove"
+                          title="Remove phase"
                         >
                           <X className="w-4 h-4" />
                         </button>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="relative">
-                        <SearchableSelect
-                          label="Pricing model"
-                          options={MODELS}
-                          value={rc.model}
-                          onChange={(v) => setRateCard(i, 'model', v)}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Key</label>
+                        <input
+                          type="text"
+                          placeholder="default"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          value={ph.key}
+                          onChange={(e) => setPhase(pi, 'key', e.target.value)}
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
                         <input
                           type="text"
-                          placeholder="API Requests"
+                          placeholder="Default"
                           className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          value={rc.name}
-                          onChange={(e) => setRateCard(i, 'name', e.target.value)}
+                          value={ph.name}
+                          onChange={(e) => setPhase(pi, 'name', e.target.value)}
                         />
                       </div>
                       <div className="relative">
                         <SearchableSelect
-                          label={rc.model === 'flat' ? 'Feature (optional)' : 'Feature'}
-                          options={features.map((f) => ({ value: f.key, label: `${f.name} (${f.key})` }))}
-                          value={rc.featureKey}
-                          onChange={(v) => setRateCard(i, 'featureKey', v)}
+                          label="Duration"
+                          options={DURATIONS}
+                          value={ph.duration}
+                          onChange={(v) => setPhase(pi, 'duration', v)}
+                          placeholder="Entire term"
                           allowCustom
-                          placeholder={rc.model === 'flat' ? '— none —' : 'Select a feature'}
                         />
                       </div>
-
-                      {rc.model === 'flat' && (
-                        <div className="relative">
-                          <SearchableSelect
-                            label="Charge"
-                            options={[
-                              { value: '', label: 'One-time fee' },
-                              ...CADENCES.map((c) => ({ value: c.value, label: `Recurring — ${c.label}` })),
-                            ]}
-                            value={rc.cadence}
-                            onChange={(v) => setRateCard(i, 'cadence', v)}
-                          />
-                        </div>
-                      )}
-
-                      {rc.model === 'unit' && (
-                        <div>
-                          <label className="block text-xs font-medium text-slate-500 mb-1">Unit price</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="any"
-                            placeholder="0.01"
-                            className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            value={rc.amount}
-                            onChange={(e) => setRateCard(i, 'amount', e.target.value)}
-                          />
-                        </div>
-                      )}
-
-                      {rc.model === 'package' && (
-                        <>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Price per package</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="any"
-                              placeholder="10.00"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                              value={rc.amount}
-                              onChange={(e) => setRateCard(i, 'amount', e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Units per package</label>
-                            <input
-                              type="number"
-                              min="1"
-                              step="any"
-                              placeholder="20"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                              value={rc.quantityPerPackage}
-                              onChange={(e) => setRateCard(i, 'quantityPerPackage', e.target.value)}
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {rc.model === 'dynamic' && (
-                        <div>
-                          <label className="block text-xs font-medium text-slate-500 mb-1">Multiplier (markup)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="any"
-                            placeholder="1.0"
-                            className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            value={rc.multiplier}
-                            onChange={(e) => setRateCard(i, 'multiplier', e.target.value)}
-                          />
-                          <p className="text-xs text-slate-400 mt-1">1.0 = base price, 1.5 = +50% markup.</p>
-                        </div>
-                      )}
                     </div>
 
-                    {rc.model === 'tiered' && (
-                      <div className="border-t border-slate-100 pt-3">
-                        <div className="relative max-w-xs mb-3">
-                          <SearchableSelect
-                            label="Tiering mode"
-                            options={TIER_MODES}
-                            value={rc.tierMode}
-                            onChange={(v) => setRateCard(i, 'tierMode', v)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          {rc.tiers.map((tier, t) => (
-                            <div key={t} className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                min="0"
-                                step="any"
-                                placeholder="Up to (∞ = blank)"
-                                className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                value={tier.upToAmount}
-                                onChange={(e) => setTier(i, t, 'upToAmount', e.target.value)}
-                              />
-                              <input
-                                type="number"
-                                min="0"
-                                step="any"
-                                placeholder="Unit price"
-                                className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                value={tier.unitPrice}
-                                onChange={(e) => setTier(i, t, 'unitPrice', e.target.value)}
-                              />
-                              <input
-                                type="number"
-                                min="0"
-                                step="any"
-                                placeholder="Flat price"
-                                className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                value={tier.flatPrice}
-                                onChange={(e) => setTier(i, t, 'flatPrice', e.target.value)}
-                              />
+                    <div className="border-t border-slate-100 pt-3">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Rate cards</label>
+                        <button
+                          onClick={() => addRateCard(pi)}
+                          className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
+                        >
+                          <Plus className="w-3.5 h-3.5 mr-1" /> Add rate card
+                        </button>
+                      </div>
+
+                      {(ph.rateCards || []).map((rc, ri) => (
+                        <div key={ri} className="rounded-xl border border-slate-200 p-4 mb-3 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-slate-500">Rate card {ri + 1}</span>
+                            {ph.rateCards.length > 1 && (
                               <button
-                                onClick={() => setFormData((prev) => {
-                                  const rateCards = [...prev.rateCards];
-                                  const tiers = rateCards[i].tiers.filter((_, idx) => idx !== t);
-                                  rateCards[i] = { ...rateCards[i], tiers };
-                                  return { ...prev, rateCards };
-                                })}
-                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
-                                title="Remove tier"
+                                onClick={() => removeRateCard(pi, ri)}
+                                className="p-1 text-red-500 hover:bg-red-50 rounded"
+                                title="Remove"
                               >
                                 <X className="w-4 h-4" />
                               </button>
-                            </div>
-                          ))}
-                          <button
-                            onClick={() => setFormData((prev) => {
-                              const rateCards = [...prev.rateCards];
-                              rateCards[i] = { ...rateCards[i], tiers: [...rateCards[i].tiers, { upToAmount: '', unitPrice: '', flatPrice: '' }] };
-                              return { ...prev, rateCards };
-                            })}
-                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
-                          >
-                            <Plus className="w-3.5 h-3.5 mr-1" /> Add tier
-                          </button>
-                          <p className="text-xs text-slate-400 mt-1">
-                            Blank "up to" = open-ended (∞). Leave unit price or flat price blank to omit it.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                            )}
+                          </div>
 
-                    {rc.model === 'flat' && (
-                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Amount</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          placeholder="199.00"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          value={rc.amount}
-                          onChange={(e) => setRateCard(i, 'amount', e.target.value)}
-                        />
-                      </div>
-                    )}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="relative">
+                              <SearchableSelect
+                                label="Pricing model"
+                                options={MODELS}
+                                value={rc.model}
+                                onChange={(v) => setRateCard(pi, ri, 'model', v)}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
+                              <input
+                                type="text"
+                                placeholder="API Requests"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                value={rc.name}
+                                onChange={(e) => setRateCard(pi, ri, 'name', e.target.value)}
+                              />
+                            </div>
+                            <div className="relative">
+                              <SearchableSelect
+                                label={rc.model === 'flat' ? 'Feature (optional)' : 'Feature'}
+                                options={features.map((f) => ({ value: f.key, label: `${f.name} (${f.key})` }))}
+                                value={rc.featureKey}
+                                onChange={(v) => setRateCard(pi, ri, 'featureKey', v)}
+                                allowCustom
+                                placeholder={rc.model === 'flat' ? '— none —' : 'Select a feature'}
+                              />
+                            </div>
+
+                            {rc.model === 'flat' && (
+                              <div className="relative">
+                                <SearchableSelect
+                                  label="Charge"
+                                  options={[
+                                    { value: '', label: 'One-time fee' },
+                                    ...CADENCES.map((c) => ({ value: c.value, label: `Recurring — ${c.label}` })),
+                                  ]}
+                                  value={rc.cadence}
+                                  onChange={(v) => setRateCard(pi, ri, 'cadence', v)}
+                                />
+                              </div>
+                            )}
+
+                            {rc.model === 'unit' && (
+                              <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Unit price</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  placeholder="0.01"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  value={rc.amount}
+                                  onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
+                                />
+                              </div>
+                            )}
+
+                            {rc.model === 'package' && (
+                              <>
+                                <div>
+                                  <label className="block text-xs font-medium text-slate-500 mb-1">Price per package</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="any"
+                                    placeholder="10.00"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    value={rc.amount}
+                                    onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-slate-500 mb-1">Units per package</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    step="any"
+                                    placeholder="20"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    value={rc.quantityPerPackage}
+                                    onChange={(e) => setRateCard(pi, ri, 'quantityPerPackage', e.target.value)}
+                                  />
+                                </div>
+                              </>
+                            )}
+
+                            {rc.model === 'dynamic' && (
+                              <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Multiplier (markup)</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  placeholder="1.0"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  value={rc.multiplier}
+                                  onChange={(e) => setRateCard(pi, ri, 'multiplier', e.target.value)}
+                                />
+                                <p className="text-xs text-slate-400 mt-1">1.0 = base price, 1.5 = +50% markup.</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {rc.model === 'tiered' && (
+                            <div className="border-t border-slate-100 pt-3">
+                              <div className="relative max-w-xs mb-3">
+                                <SearchableSelect
+                                  label="Tiering mode"
+                                  options={TIER_MODES}
+                                  value={rc.tierMode}
+                                  onChange={(v) => setRateCard(pi, ri, 'tierMode', v)}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                {rc.tiers.map((tier, t) => (
+                                  <div key={t} className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      placeholder="Up to (∞ = blank)"
+                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      value={tier.upToAmount}
+                                      onChange={(e) => setTier(pi, ri, t, 'upToAmount', e.target.value)}
+                                    />
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      placeholder="Unit price"
+                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      value={tier.unitPrice}
+                                      onChange={(e) => setTier(pi, ri, t, 'unitPrice', e.target.value)}
+                                    />
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      placeholder="Flat price"
+                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      value={tier.flatPrice}
+                                      onChange={(e) => setTier(pi, ri, t, 'flatPrice', e.target.value)}
+                                    />
+                                    <button
+                                      onClick={() => removeTier(pi, ri, t)}
+                                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
+                                      title="Remove tier"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ))}
+                                <button
+                                  onClick={() => addTier(pi, ri)}
+                                  className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                                >
+                                  <Plus className="w-3.5 h-3.5 mr-1" /> Add tier
+                                </button>
+                                <p className="text-xs text-slate-400 mt-1">
+                                  Blank "up to" = open-ended (∞). Leave unit price or flat price blank to omit it.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {rc.model === 'flat' && (
+                            <div>
+                              <label className="block text-xs font-medium text-slate-500 mb-1">Amount</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                placeholder="199.00"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                value={rc.amount}
+                                onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -694,6 +906,7 @@ const Plans = () => {
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 };
