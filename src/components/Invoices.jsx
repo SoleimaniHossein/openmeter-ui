@@ -7,6 +7,7 @@ import LoadingSpinner from './LoadingSpinner';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import InvoiceDetail from './InvoiceDetail';
 import SearchableSelect from './SearchableSelect';
+import { useConfirm } from '../hooks/useConfirm';
 
 const STATUS_FILTERS = [
   { label: 'All statuses', value: '' },
@@ -37,6 +38,7 @@ const Invoices = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [invoicing, setInvoicing] = useState(false);
   const [message, setMessage] = useState(null);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
@@ -79,7 +81,12 @@ const Invoices = () => {
       return;
     }
     const customer = customers.find((c) => c.id === selectedCustomer);
-    if (!window.confirm(`Generate an invoice for "${customer?.name || selectedCustomer}" from their pending line items?`)) return;
+    if (!(await requestConfirm({
+      title: 'Generate invoice',
+      message: `Generate an invoice for "${customer?.name || selectedCustomer}" from their pending line items?`,
+      confirmLabel: 'Generate',
+      icon: Receipt,
+    }))) return;
     setInvoicing(true);
     setMessage(null);
     try {
@@ -316,6 +323,7 @@ const Invoices = () => {
       {selectedInvoice && (
         <InvoiceDetail invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} onChanged={fetchInvoices} />
       )}
+      {confirmDialog}
     </div>
   );
 };

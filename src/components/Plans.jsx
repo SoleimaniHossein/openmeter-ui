@@ -3,6 +3,7 @@ import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle, Rocket, Archive, Lay
 import { getPlans, createPlan, updatePlan, publishPlan, archivePlan, deletePlan, getFeatures } from '../api/openmeter';
 import SearchableSelect from './SearchableSelect';
 import LoadingSpinner from './LoadingSpinner';
+import { useConfirm } from '../hooks/useConfirm';
 
 const CADENCES = [
   { value: 'P1M', label: 'Monthly (P1M)' },
@@ -129,6 +130,7 @@ const Plans = () => {
   const [formData, setFormData] = useState(JSON.parse(JSON.stringify(EMPTY_FORM)));
   const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const fetchPlans = useCallback(async () => {
     setLoading(true);
@@ -213,7 +215,12 @@ const Plans = () => {
   };
 
   const handlePublish = async (plan) => {
-    if (!confirm(`Publish "${plan.name}"? It becomes available for subscriptions.`)) return;
+    if (!(await requestConfirm({
+      title: 'Publish plan',
+      message: `Publish "${plan.name}"? It becomes available for subscriptions.`,
+      confirmLabel: 'Publish',
+      icon: Rocket,
+    }))) return;
     try {
       await publishPlan(plan.id);
       setMessage({ type: 'success', text: `Plan "${plan.name}" published.` });
@@ -224,7 +231,12 @@ const Plans = () => {
   };
 
   const handleArchive = async (plan) => {
-    if (!confirm(`Archive "${plan.name}"?`)) return;
+    if (!(await requestConfirm({
+      title: 'Archive plan',
+      message: `Archive "${plan.name}"?`,
+      confirmLabel: 'Archive',
+      icon: Archive,
+    }))) return;
     try {
       await archivePlan(plan.id);
       setMessage({ type: 'success', text: `Plan "${plan.name}" archived.` });
@@ -235,7 +247,13 @@ const Plans = () => {
   };
 
   const handleDelete = async (plan) => {
-    if (!confirm(`Delete "${plan.name}"?`)) return;
+    if (!(await requestConfirm({
+      title: 'Delete plan',
+      message: `Delete "${plan.name}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      icon: Trash2,
+    }))) return;
     try {
       await deletePlan(plan.id);
       setMessage({ type: 'success', text: `Plan "${plan.name}" deleted.` });
@@ -694,6 +712,7 @@ const Plans = () => {
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 };

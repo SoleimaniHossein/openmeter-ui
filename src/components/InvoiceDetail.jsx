@@ -3,6 +3,7 @@ import { X, RefreshCw, ArrowRight, Send, Trash2, Ban, AlertCircle } from 'lucide
 import { format, isValid } from 'date-fns';
 import { advanceInvoice, approveInvoice, deleteInvoice, voidInvoice, getInvoice } from '../api/openmeter';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
+import { useConfirm } from '../hooks/useConfirm';
 
 const formatMoney = (value, currency = 'USD') => {
   const num = Number(value || 0);
@@ -48,14 +49,15 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [action, setAction] = useState(null);
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   const available = invoice?.statusDetails?.availableActions || {};
   const currency = invoice?.currency || 'USD';
   const totals = invoice?.totals || {};
   const lines = invoice?.lines || [];
 
-  const runAction = async (type, fn, confirmMsg) => {
-    if (confirmMsg && !window.confirm(confirmMsg)) return;
+  const runAction = async (type, fn, confirmOpts) => {
+    if (confirmOpts && !(await requestConfirm(confirmOpts))) return;
     setAction(type);
     setError(null);
     try {
@@ -88,6 +90,7 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
   };
 
   return (
+    <>
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
@@ -230,7 +233,12 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
             )}
             {available.approve && (
               <ActionButton
-                onClick={() => runAction('approve', approveInvoice, 'Send this invoice to the customer?')}
+                onClick={() => runAction('approve', approveInvoice, {
+                  title: 'Send invoice',
+                  message: 'Send this invoice to the customer?',
+                  confirmLabel: 'Send',
+                  icon: Send,
+                })}
                 loading={action === 'approve'}
                 icon={Send}
                 label="Send to Customer"
@@ -239,7 +247,13 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
             )}
             {available.delete && (
               <ActionButton
-                onClick={() => runAction('delete', deleteInvoice, 'Delete this draft invoice?')}
+                onClick={() => runAction('delete', deleteInvoice, {
+                  title: 'Delete invoice',
+                  message: 'Delete this draft invoice?',
+                  confirmLabel: 'Delete',
+                  variant: 'danger',
+                  icon: Trash2,
+                })}
                 loading={action === 'delete'}
                 icon={Trash2}
                 label="Delete"
@@ -248,7 +262,13 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
             )}
             {available.void && (
               <ActionButton
-                onClick={() => runAction('void', voidInvoice, 'Void this invoice?')}
+                onClick={() => runAction('void', voidInvoice, {
+                  title: 'Void invoice',
+                  message: 'Void this invoice?',
+                  confirmLabel: 'Void',
+                  variant: 'danger',
+                  icon: Ban,
+                })}
                 loading={action === 'void'}
                 icon={Ban}
                 label="Void"
@@ -258,7 +278,9 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      {confirmDialog}
+    </>
   );
 };
 
