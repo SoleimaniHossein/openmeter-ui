@@ -16,7 +16,7 @@ const Events = () => {
   const [result, setResult] = useState(null);
   const [eventData, setEventData] = useState({
     subject: urlSubject || '',
-    type: 'api_requests',
+    types: [],
     path: '/api/users',
     method: 'GET',
     count: 1,
@@ -30,6 +30,20 @@ const Events = () => {
     return Array.from(keys).sort();
   }, [customers]);
 
+  // One option per meter so every meter is visible even when several share an
+  // eventType. The value is the eventType actually sent on the wire; the row
+  // shows the meter name, its eventType/valueProperty, and an aggregation badge.
+  const typeOptions = useMemo(
+    () =>
+      meters.map((m) => ({
+        value: m.eventType,
+        label: m.name,
+        hint: `${m.eventType}${m.valueProperty ? ` · ${m.valueProperty}` : ''}`,
+        badge: m.aggregation || '',
+      })),
+    [meters]
+  );
+
   useEffect(() => {
     getMeters()
       .then((res) => {
@@ -38,7 +52,7 @@ const Events = () => {
         if (list.length) {
           setEventData((prev) => ({
             ...prev,
-            type: list[0].eventType || prev.type,
+            types: prev.types.length ? prev.types : [list[0].eventType],
           }));
         }
       })
@@ -50,10 +64,10 @@ const Events = () => {
       .catch(() => {});
   }, []);
 
-  const buildEvent = (i) => ({
+  const buildEvent = (i, type) => ({
     specversion: '1.0',
-    type: eventData.type,
-    id: `event-${Date.now()}-${i}`,
+    type,
+    id: `event-${Date.now()}-${type}-${i}`,
     time: new Date().toISOString(),
     source: 'openmeter-ui',
     subject: eventData.subject,
@@ -64,8 +78,10 @@ const Events = () => {
     setLoading(true);
     setResult(null);
     try {
-      await sendEvent(buildEvent(0));
-      setResult({ success: true, message: '✅ Event sent successfully!' });
+      for (const t of eventData.types) {
+        await sendEvent(buildEvent(0, t));
+      }
+      setResult({ success: true, message: `✅ Sent ${eventData.types.length} event${eventData.types.length === 1 ? '' : 's'} successfully!` });
     } catch (error) {
       setResult({ success: false, message: `❌ Failed: ${error.message}` });
     } finally { setLoading(false); }
@@ -76,12 +92,14 @@ const Events = () => {
     setResult(null);
     try {
       let success = 0;
-      for (let i = 0; i < 5; i++) {
-        await sendEvent(buildEvent(i));
-        success++;
-        await new Promise(r => setTimeout(r, 100));
+      for (const t of eventData.types) {
+        for (let i = 0; i < 5; i++) {
+          await sendEvent(buildEvent(i, t));
+          success++;
+          await new Promise(r => setTimeout(r, 100));
+        }
       }
-      setResult({ success: true, message: `✅ Sent ${success} of 5 events successfully!` });
+      setResult({ success: true, message: `✅ Sent ${success} of ${eventData.types.length * 5} events successfully!` });
     } catch (error) {
       setResult({ success: false, message: `❌ Failed: ${error.message}` });
     } finally { setLoading(false); }
@@ -117,14 +135,19 @@ const Events = () => {
           <div>
             <SearchableSelect
               label="Event Type"
-              value={eventData.type}
-              onChange={(v) => setEventData({ ...eventData, type: v })}
-              options={meters.map((m) => ({ value: m.eventType, label: `${m.name} — ${m.eventType}` }))}
-              placeholder="api.request"
+              multiple
+              value={eventData.types}
+              onChange={(v) => setEventData({ ...eventData, types: v })}
+              options={typeOptions}
+              placeholder="Select event type(s)"
               allowCustom
             />
-            {meters.length > 0 && (
-              <p className="text-xs text-slate-400 mt-1">Matching meter: {meters.find((m) => m.eventType === eventData.type)?.name}</p>
+            {eventData.types.length > 0 && (
+              <p className="text-xs text-slate-400 mt-1">
+                {eventData.types.length === 1
+                  ? `Matching meters: ${meters.filter((m) => m.eventType === eventData.types[0]).map((m) => m.name).join(', ') || eventData.types[0]}`
+                  : `${eventData.types.length} event type${eventData.types.length === 1 ? '' : 's'} selected — one event is sent per type.`}
+              </p>
             )}
           </div>
           <div>
@@ -145,10 +168,10 @@ const Events = () => {
           </div>
         </div>
         <div className="flex space-x-3">
-          <button onClick={handleSendEvent} disabled={loading || !eventData.subject} className="flex-1 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+          <button onClick={handleSendEvent} disabled={loading || !eventData.subject || eventData.types.length === 0} className="flex-1 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
             {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><Send className="w-4 h-4 mr-2" />Send Single</>}
           </button>
-          <button onClick={handleSendMultiple} disabled={loading || !eventData.subject} className="flex-1 bg-emerald-600 text-white py-2 rounded hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+          <button onClick={handleSendMultiple} disabled={loading || !eventData.subject || eventData.types.length === 0} className="flex-1 bg-emerald-600 text-white py-2 rounded hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
             {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><Send className="w-4 h-4 mr-2" />Send 5 Events</>}
           </button>
         </div>

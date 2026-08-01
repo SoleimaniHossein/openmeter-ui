@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Search, X, Check } from 'lucide-react';
 
-// Dropdown with a search box. `options` is [{ value, label }].
+// Dropdown with a search box. `options` is [{ value, label, hint?, badge? }].
 //   - single mode: `value` is a string; choosing an item closes the dropdown.
 //   - multiple mode (`multiple`): `value` is an array of strings; selected items
 //     render as removable chips, choosing toggles an item, and the dropdown stays open.
+// `hint` renders as a secondary line and `badge` as a right-aligned pill.
 // When `allowCustom` is set, typing a value not in the list is allowed
 // (pressing Enter or clicking "Use ..." commits the typed value).
+const BADGE_STYLES = {
+  SUM: 'bg-indigo-50 text-indigo-700',
+  COUNT: 'bg-sky-50 text-sky-700',
+  AVG: 'bg-emerald-50 text-emerald-700',
+  MIN: 'bg-amber-50 text-amber-700',
+  MAX: 'bg-rose-50 text-rose-700',
+};
 const SearchableSelect = ({
   label,
   value,
@@ -44,6 +52,20 @@ const SearchableSelect = ({
 
   const selected = options.filter((o) => isSelected(o.value));
 
+  // One chip per selected value, even when several options share the same
+  // value (e.g. meters with the same eventType). When the value is ambiguous,
+  // the chip shows the raw value instead of the first option's label.
+  const chips = (multiple ? values : []).map((v) => {
+    const matches = options.filter((o) => o.value === v);
+    return {
+      value: v,
+      label: matches.length === 1 ? matches[0].label : v,
+      title: matches.length > 0
+        ? matches.map((o) => (o.hint ? `${o.label} — ${o.hint}` : o.label)).join(', ')
+        : v,
+    };
+  });
+
   const filtered = options.filter((o) =>
     (o.label || '').toLowerCase().includes(query.trim().toLowerCase())
   );
@@ -76,10 +98,11 @@ const SearchableSelect = ({
           onClick={() => setOpen((o) => !o)}
           className="w-full flex flex-wrap items-center gap-1.5 min-h-[38px] px-2 py-1.5 rounded-lg border border-slate-300 text-sm cursor-pointer hover:border-slate-400 transition"
         >
-          {values.length === 0 && <span className="text-slate-400 px-1.5 py-0.5">{placeholder}</span>}
-          {selected.map((o) => (
+          {chips.length === 0 && <span className="text-slate-400 px-1.5 py-0.5">{placeholder}</span>}
+          {chips.map((o, idx) => (
             <span
-              key={o.value}
+              key={`${o.value}-${idx}`}
+              title={o.title || o.label}
               className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium"
             >
               <span className="truncate max-w-[14rem]">{o.label}</span>
@@ -163,16 +186,27 @@ const SearchableSelect = ({
             {filtered.length === 0 && (
               <p className="px-3 py-2 text-sm text-slate-400">No matches</p>
             )}
-            {filtered.map((o) => (
+            {filtered.map((o, idx) => (
               <button
                 type="button"
-                key={o.value}
+                key={`${o.value}-${idx}`}
+                title={o.label}
                 onClick={() => toggle(o.value)}
                 className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-2 hover:bg-indigo-50 transition ${
                   isSelected(o.value) ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-700'
                 }`}
               >
-                <span className="truncate">{o.label}</span>
+                <span className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{o.label}</span>
+                    {o.hint && <span className="block truncate font-mono text-[11px] text-slate-400">{o.hint}</span>}
+                  </span>
+                  {o.badge && (
+                    <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold flex-shrink-0 ${BADGE_STYLES[o.badge] || 'bg-slate-100 text-slate-600'}`}>
+                      {o.badge}
+                    </span>
+                  )}
+                </span>
                 {isSelected(o.value) && <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
               </button>
             ))}
