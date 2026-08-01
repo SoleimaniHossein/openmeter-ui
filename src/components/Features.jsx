@@ -52,17 +52,19 @@ const Features = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!(await requestConfirm({
-      title: 'Delete feature',
-      message: 'Delete this feature? This cannot be undone.',
-      confirmLabel: 'Delete',
-      variant: 'danger',
-      icon: Trash2,
-    }))) return;
     try {
-      await deleteFeature(id);
-      setMessage({ type: 'success', text: 'Feature deleted.' });
-      fetchFeatures();
+      await requestConfirm({
+        title: 'Delete feature',
+        message: 'Delete this feature? This cannot be undone.',
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        icon: Trash2,
+        action: async () => {
+          await deleteFeature(id);
+          setMessage({ type: 'success', text: 'Feature deleted.' });
+          fetchFeatures();
+        },
+      });
     } catch (error) {
       setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete feature' });
     }

@@ -17,6 +17,7 @@ const STATUS_FILTERS = [
   { label: 'Issued', value: 'issued' },
   { label: 'Payment processing', value: 'payment_processing' },
   { label: 'Overdue', value: 'overdue' },
+  { label: 'Uncollectible', value: 'uncollectible' },
   { label: 'Paid', value: 'paid' },
   { label: 'Voided', value: 'voided' },
 ];
@@ -75,29 +76,31 @@ const Invoices = () => {
     setSearchParams(next, { replace: true });
   }, [selectedCustomer, statusFilter, setSearchParams]);
 
-  const handleGenerateInvoice = async () => {
-    if (!selectedCustomer) {
+  const handleGenerateInvoice = async (customerId = selectedCustomer) => {
+    if (!customerId) {
       setMessage({ type: 'error', text: 'Select a customer to invoice first.' });
       return;
     }
-    const customer = customers.find((c) => c.id === selectedCustomer);
-    if (!(await requestConfirm({
-      title: 'Generate invoice',
-      message: `Generate an invoice for "${customer?.name || selectedCustomer}" from their pending line items?`,
-      confirmLabel: 'Generate',
-      icon: Receipt,
-    }))) return;
+    const customer = customers.find((c) => c.id === customerId);
     setInvoicing(true);
     setMessage(null);
     try {
-      const created = await invoiceCustomer(selectedCustomer);
-      setMessage({
-        type: 'success',
-        text: created.length
-          ? `Invoice created (${created.map((i) => i.number || i.id).join(', ')}).`
-          : 'Invoice created successfully.',
+      await requestConfirm({
+        title: 'Generate invoice',
+        message: `Generate an invoice for "${customer?.name || customerId}" from their pending line items?`,
+        confirmLabel: 'Generate',
+        icon: Receipt,
+        action: async () => {
+          const created = await invoiceCustomer(customerId);
+          await fetchInvoices();
+          setMessage({
+            type: 'success',
+            text: created.length
+              ? `Invoice created (${created.map((i) => i.number || i.id).join(', ')}).`
+              : 'Invoice created successfully.',
+          });
+        },
       });
-      await fetchInvoices();
     } catch (error) {
       const info = describeInvoiceError(error, customer);
       let action = null;
@@ -303,7 +306,16 @@ const Invoices = () => {
                     <td className="px-6 py-4 font-semibold text-slate-900 text-right">{formatMoney(inv.totals?.total, inv.currency)}</td>
                     <td className="px-6 py-4"><InvoiceStatusBadge status={inv.status} extendedStatus={inv.statusDetails?.extendedStatus} /></td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end gap-2">
+                        {inv.status === 'gathering' && (
+                          <button
+                            onClick={() => handleGenerateInvoice(inv.customer?.id)}
+                            disabled={invoicing}
+                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition disabled:opacity-50"
+                          >
+                            <FileText className="w-4 h-4 mr-1" /> Finalize
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedInvoice(inv)}
                           className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition"

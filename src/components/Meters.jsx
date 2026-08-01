@@ -82,17 +82,19 @@ const Meters = () => {
   };
 
   const handleDelete = async (meter) => {
-    if (!(await requestConfirm({
-      title: 'Delete meter',
-      message: `Delete meter "${meter.name}"? This cannot be undone.`,
-      confirmLabel: 'Delete',
-      variant: 'danger',
-      icon: Trash2,
-    }))) return;
     try {
-      await deleteMeter(meter.slug || meter.id);
-      setMessage({ type: 'success', text: 'Meter deleted.' });
-      fetchMeters();
+      await requestConfirm({
+        title: 'Delete meter',
+        message: `Delete meter "${meter.name}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        icon: Trash2,
+        action: async () => {
+          await deleteMeter(meter.slug || meter.id);
+          setMessage({ type: 'success', text: 'Meter deleted.' });
+          fetchMeters();
+        },
+      });
     } catch (error) {
       setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete meter' });
     }
