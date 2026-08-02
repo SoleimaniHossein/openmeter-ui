@@ -1,9 +1,18 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
-import { sendEvent, getMeters, getCustomers } from '../api/openmeter';
+import { Send, RefreshCw, CheckCircle, XCircle, ChevronLeft, ChevronRight, Inbox, AlertTriangle } from 'lucide-react';
+import { sendEvent, getEvents, getMeters, getCustomers } from '../api/openmeter';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
+
+const formatTime = (iso) => {
+  if (!iso) return '-';
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return iso;
+  }
+};
 
 const Events = () => {
   const [searchParams] = useSearchParams();
@@ -19,6 +28,14 @@ const Events = () => {
     type: '',
     dataJson: '',
   });
+
+  // Ingested events list state
+  const [events, setEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState(null);
+  const [typeFilter, setTypeFilter] = useState('');
+  const [nextCursor, setNextCursor] = useState('');
+  const [prevCursors, setPrevCursors] = useState([]);
 
   const subjectOptions = useMemo(() => {
     const keys = new Set();
@@ -41,6 +58,15 @@ const Events = () => {
       })),
     [meters]
   );
+
+  const eventTypeOptions = useMemo(() => {
+    const set = new Set();
+    meters.forEach((m) => m.eventType && set.add(m.eventType));
+    return [
+      { value: '', label: 'All types' },
+      ...Array.from(set).sort().map((t) => ({ value: t, label: t })),
+    ];
+  }, [meters]);
 
   // Build a starter `data` object for a given event type, including the
   // valueProperty fields the meters aggregate on plus their groupBy keys.
@@ -88,6 +114,26 @@ const Events = () => {
       .catch(() => {});
   }, []);
 
+  const fetchEvents = useCallback(async ({ cursor = '', reset = false, silent = false } = {}) => {
+    if (!silent) setEventsLoading(true);
+    setEventsError(null);
+    try {
+      const res = await getEvents({ type: typeFilter || undefined, cursor: cursor || undefined });
+      setEvents(res.data || []);
+      setNextCursor(res.nextCursor || '');
+      setPrevCursors((prev) => (reset ? [] : cursor ? [...prev, cursor] : prev));
+    } catch (error) {
+      setEventsError(error?.response?.data?.detail || error.message || 'Failed to load events');
+      if (!silent) setEvents([]);
+    } finally {
+      if (!silent) setEventsLoading(false);
+    }
+  }, [typeFilter]);
+
+  useEffect(() => {
+    fetchEvents({ reset: true });
+  }, [fetchEvents]);
+
   const parseData = () => {
     try {
       const obj = JSON.parse(eventData.dataJson || '{}');
@@ -115,6 +161,7 @@ const Events = () => {
     try {
       await sendEvent(buildEvent(0, eventData.type));
       setResult({ success: true, message: `✅ Sent 1 event successfully!` });
+      fetchEvents({ reset: true });
     } catch (error) {
       setResult({ success: false, message: `❌ Failed: ${error.message}` });
     } finally { setLoading(false); }
@@ -131,6 +178,7 @@ const Events = () => {
         await new Promise(r => setTimeout(r, 100));
       }
       setResult({ success: true, message: `✅ Sent ${success} events successfully!` });
+      fetchEvents({ reset: true });
     } catch (error) {
       setResult({ success: false, message: `❌ Failed: ${error.message}` });
     } finally { setLoading(false); }
@@ -222,6 +270,116 @@ const Events = () => {
           {result.success ? <CheckCircle className="w-5 h-5 mr-2" /> : <XCircle className="w-5 h-5 mr-2" />}
           <span className="text-sm">{result.message}</span>
         </div>}
+      </div>
+
+      {/* Ingested events list */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h3 className="text-lg font-semibold flex items-center"><Inbox className="w-5 h-5 mr-2 text-indigo-600" />Ingested Events</h3>
+          <div className="flex items-center gap-3">
+            <div className="w-48">
+              <SearchableSelect
+                label=""
+                value={typeFilter}
+                onChange={setTypeFilter}
+                options={eventTypeOptions}
+                placeholder="All types"
+              />
+            </div>
+            <button
+              onClick={() => fetchEvents({ reset: true, silent: true })}
+              className="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+            </button>
+          </div>
+        </div>
+
+        {eventsError && (
+          <div className="p-3.5 rounded-lg text-sm flex items-center bg-red-50 border border-red-200 text-red-700 mb-4">
+            <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" /> {eventsError}
+          </div>
+        )}
+
+        {eventsLoading ? (
+          <div className="py-8 flex justify-center">
+            <LoadingSpinner size="md" message="Loading events..." />
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto -mx-6 px-6">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Time</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Subject</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Source</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Ingested</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {events.length === 0 ? (
+                    <tr><td colSpan="7" className="px-6 py-12 text-center">
+                      <Inbox className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-slate-500 text-sm">No events found{typeFilter ? ` for type "${typeFilter}"` : ''}. Send one above!</p>
+                    </td></tr>
+                  ) : (
+                    events.map((ev, i) => {
+                      const e = ev.event || {};
+                      return (
+                        <tr key={e.id || `${ev.ingestedAt}-${i}`} className="hover:bg-slate-50/60 transition">
+                          <td className="px-6 py-3 text-sm text-slate-600 whitespace-nowrap">{formatTime(e.time)}</td>
+                          <td className="px-6 py-3">
+                            <span className="inline-flex px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 text-xs font-medium">{e.type || '-'}</span>
+                          </td>
+                          <td className="px-6 py-3 font-mono text-sm text-slate-700">{e.subject || '-'}</td>
+                          <td className="px-6 py-3 font-mono text-sm text-slate-500 hidden md:table-cell">{e.source || '-'}</td>
+                          <td className="px-6 py-3 font-mono text-xs text-slate-400 hidden lg:table-cell">{e.id ? `${e.id.slice(0, 12)}…` : '-'}</td>
+                          <td className="px-6 py-3 text-sm text-slate-500 whitespace-nowrap">{formatTime(ev.ingestedAt)}</td>
+                          <td className="px-6 py-3 text-right">
+                            {ev.validationError ? (
+                              <span className="inline-flex px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium" title={ev.validationError}>Invalid</span>
+                            ) : (
+                              <span className="inline-flex px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium">OK</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-100 mt-4 pt-4">
+              <p className="text-xs text-slate-400">{events.length} event{events.length === 1 ? '' : 's'} loaded</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const prev = prevCursors[prevCursors.length - 1];
+                    if (!prev) return;
+                    setPrevCursors((list) => list.slice(0, -1));
+                    fetchEvents({ cursor: prev });
+                  }}
+                  disabled={prevCursors.length === 0 || eventsLoading}
+                  className="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Prev
+                </button>
+                <button
+                  onClick={() => fetchEvents({ cursor: nextCursor })}
+                  disabled={!nextCursor || eventsLoading}
+                  className="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next <ChevronRight className="w-4 h-4 ml-1" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

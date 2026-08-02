@@ -213,12 +213,19 @@ export const sendEvent = async (event) => {
   }
 };
 
-export const getEvents = async (params = {}) => {
+// List ingested events. Uses the upstream v2 endpoint which supports cursor
+// pagination and a JSON `filter` (e.g. { type: { $eq: "api.request" } }).
+export const getEvents = async ({ type, cursor, limit = 50 } = {}) => {
   try {
-    const response = await api.get('/openmeter/events', { params });
-    return { 
-      data: response.data?.data || [], 
-      meta: response.data?.meta || {} 
+    const params = { limit };
+    if (cursor) params.cursor = cursor;
+    const filter = {};
+    if (type) filter.type = { $eq: type };
+    if (Object.keys(filter).length) params.filter = JSON.stringify(filter);
+    const response = await api.get('/v2/events', { params });
+    return {
+      data: response.data?.items || [],
+      nextCursor: response.data?.nextCursor || '',
     };
   } catch (error) {
     console.error('Error fetching events:', error);
