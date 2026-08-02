@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle, Layers } from 'lucide-react';
-import { getFeatures, createFeature, deleteFeature, getMeters } from '../api/openmeter';
+import { Plus, RefreshCw, Edit2, Trash2, AlertCircle, CheckCircle, Layers, X } from 'lucide-react';
+import { getFeatures, createFeature, updateFeature, deleteFeature, getMeters } from '../api/openmeter';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
 import { useConfirm } from '../hooks/useConfirm';
@@ -12,6 +12,7 @@ const Features = () => {
   const [meters, setMeters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingFeature, setEditingFeature] = useState(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
   const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -39,16 +40,34 @@ const Features = () => {
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      await createFeature(formData);
+      if (editingFeature) {
+        await updateFeature(editingFeature.id, {
+          name: formData.name,
+          ...(formData.meterSlug ? { meterSlug: formData.meterSlug } : {}),
+        });
+      } else {
+        await createFeature(formData);
+      }
       setShowModal(false);
+      setEditingFeature(null);
       setFormData({ ...EMPTY_FORM });
-      setMessage({ type: 'success', text: `Feature "${formData.name}" created successfully.` });
+      setMessage({ type: 'success', text: editingFeature ? `Feature "${formData.name}" updated successfully.` : `Feature "${formData.name}" created successfully.` });
       fetchFeatures();
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to create feature' });
+      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to save feature' });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = (feature) => {
+    setEditingFeature(feature);
+    setFormData({
+      key: feature.key,
+      name: feature.name,
+      meterSlug: feature.meterSlug || '',
+    });
+    setShowModal(true);
   };
 
   const handleDelete = async (id) => {
@@ -90,7 +109,7 @@ const Features = () => {
             <RefreshCw className="w-4 h-4 mr-2" /> Refresh
           </button>
           <button
-            onClick={() => { setFormData({ ...EMPTY_FORM }); setShowModal(true); }}
+            onClick={() => { setEditingFeature(null); setFormData({ ...EMPTY_FORM }); setShowModal(true); }}
             className="inline-flex items-center px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 transition"
           >
             <Plus className="w-4 h-4 mr-2" /> Add Feature
@@ -143,7 +162,10 @@ const Features = () => {
                     <span className="inline-flex px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-mono">{f.meterSlug || '-'}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button onClick={() => handleDelete(f.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button onClick={() => handleEdit(f)} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(f.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -152,14 +174,20 @@ const Features = () => {
         </table>
       </div>
 
-      {/* Add Feature modal */}
+      {/* Add/Edit Feature modal */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-900">Add Feature</h3>
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">{editingFeature ? 'Edit' : 'Add'} Feature</h3>
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
+              {editingFeature && (
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                  Only <strong>name</strong> and <strong>meter</strong> can be changed after creation. Key is immutable.
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Name</label>
                 <input
@@ -178,6 +206,7 @@ const Features = () => {
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.key}
                   onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+                  disabled={!!editingFeature}
                 />
               </div>
               <div>
@@ -198,7 +227,7 @@ const Features = () => {
                 disabled={saving}
                 className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition disabled:opacity-50"
               >
-                {saving ? 'Creating...' : 'Create'}
+                {saving ? 'Saving...' : editingFeature ? 'Save' : 'Create'}
               </button>
             </div>
           </div>

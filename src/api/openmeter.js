@@ -189,6 +189,16 @@ export const createFeature = async (featureData) => {
   }
 };
 
+export const updateFeature = async (featureId, featureData) => {
+  try {
+    const response = await api.put(`/v1/features/${featureId}`, featureData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating feature:', error);
+    throw error;
+  }
+};
+
 export const deleteFeature = async (featureId) => {
   try {
     await api.delete(`/v1/features/${featureId}`);
