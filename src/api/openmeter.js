@@ -126,9 +126,9 @@ export const queryMeter = async (meterId, from, to, granularity = 'PT1H', groupB
 export const getCustomers = async (params = {}) => {
   try {
     const response = await api.get('/v1/customers', { params });
-    return { 
-      data: extractData(response), 
-      total: getTotal(response.data) 
+    return {
+      data: extractData(response),
+      total: getTotal(response.data)
     };
   } catch (error) {
     console.error('Error fetching customers:', error);
@@ -202,8 +202,8 @@ export const deleteFeature = async (featureId) => {
 export const sendEvent = async (event) => {
   try {
     const response = await api.post('/openmeter/events', event, {
-      headers: { 
-        'Content-Type': 'application/cloudevents+json' 
+      headers: {
+        'Content-Type': 'application/cloudevents+json'
       },
     });
     return response.data;
@@ -226,6 +226,7 @@ export const getEvents = async ({ type, cursor, limit = 50 } = {}) => {
     return {
       data: response.data?.items || [],
       nextCursor: response.data?.nextCursor || '',
+      totalCount: typeof response.data?.totalCount === 'number' ? response.data.totalCount : null,
     };
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -240,9 +241,9 @@ export const getEvents = async ({ type, cursor, limit = 50 } = {}) => {
 export const getInvoices = async (params = {}) => {
   try {
     const response = await api.get('/v1/billing/invoices', { params });
-    return { 
-      data: extractData(response), 
-      total: getTotal(response.data) 
+    return {
+      data: extractData(response),
+      total: getTotal(response.data)
     };
   } catch (error) {
     console.error('Error fetching invoices:', error);

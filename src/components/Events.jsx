@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, RefreshCw, CheckCircle, XCircle, ChevronLeft, ChevronRight, Inbox, AlertTriangle } from 'lucide-react';
+import { Send, RefreshCw, CheckCircle, XCircle, ChevronLeft, ChevronRight, Inbox, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { sendEvent, getEvents, getMeters, getCustomers } from '../api/openmeter';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
@@ -36,6 +36,12 @@ const Events = () => {
   const [typeFilter, setTypeFilter] = useState('');
   const [nextCursor, setNextCursor] = useState('');
   const [prevCursors, setPrevCursors] = useState([]);
+  const [pageCursor, setPageCursor] = useState('');
+  const [refetching, setRefetching] = useState(false);
+  const [pageSize, setPageSize] = useState(5);
+  const [totalCount, setTotalCount] = useState(null);
+  const [sortKey, setSortKey] = useState('time');
+  const [sortDir, setSortDir] = useState('desc');
 
   const subjectOptions = useMemo(() => {
     const keys = new Set();
@@ -116,19 +122,25 @@ const Events = () => {
 
   const fetchEvents = useCallback(async ({ cursor = '', reset = false, silent = false } = {}) => {
     if (!silent) setEventsLoading(true);
+    setRefetching(true);
     setEventsError(null);
     try {
-      const res = await getEvents({ type: typeFilter || undefined, cursor: cursor || undefined });
+      const res = await getEvents({ type: typeFilter || undefined, cursor: cursor || undefined, limit: pageSize });
       setEvents(res.data || []);
       setNextCursor(res.nextCursor || '');
-      setPrevCursors((prev) => (reset ? [] : cursor ? [...prev, cursor] : prev));
+      setTotalCount(typeof res.totalCount === 'number' ? res.totalCount : null);
+      if (reset) {
+        setPageCursor('');
+        setPrevCursors([]);
+      }
     } catch (error) {
       setEventsError(error?.response?.data?.detail || error.message || 'Failed to load events');
       if (!silent) setEvents([]);
     } finally {
       if (!silent) setEventsLoading(false);
+      setRefetching(false);
     }
-  }, [typeFilter]);
+  }, [typeFilter, pageSize]);
 
   useEffect(() => {
     fetchEvents({ reset: true });
@@ -184,7 +196,48 @@ const Events = () => {
     } finally { setLoading(false); }
   };
 
+const getSortValue = (ev) => {
+    const e = ev.event || {};
+    switch (sortKey) {
+      case 'time': return e.time ? new Date(e.time).getTime() : -Infinity;
+      case 'type': return e.type || '';
+      case 'subject': return e.subject || '';
+      case 'source': return e.source || '';
+      case 'id': return e.id || '';
+      case 'ingested': return ev.ingestedAt ? new Date(ev.ingestedAt).getTime() : -Infinity;
+      case 'status': return ev.validationError ? 1 : 0;
+      default: return 0;
+    }
+  };
+
+  const sortedEvents = useMemo(() => {
+    const arr = [...events];
+    arr.sort((a, b) => {
+      const va = getSortValue(a);
+      const vb = getSortValue(b);
+      let cmp;
+      if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
+      else cmp = String(va).localeCompare(String(vb));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [events, sortKey, sortDir, getSortValue]);
+
   if (loadingMeters) return <LoadingSpinner message="Loading meters..." />;
+
+  const toggleSort = (key) => {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const Sortable = ({ label, col, className = '' }) => (
+    <th className={`px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide ${className}`}>
+      <button type="button" onClick={() => { toggleSort(col); }} className="inline-flex items-center gap-1 hover:text-indigo-700 transition uppercase">
+        {label}
+        {sortKey === col ? (sortDir === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-indigo-600" /> : <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />) : <ArrowUpDown className="w-3.5 h-3.5 text-slate-300" />}
+      </button>
+    </th>
+  );
 
   return (
     <div className="space-y-6">
@@ -288,9 +341,10 @@ const Events = () => {
             </div>
             <button
               onClick={() => fetchEvents({ reset: true, silent: true })}
-              className="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+              disabled={refetching}
+              className="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-60 disabled:cursor-wait"
             >
-              <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+              <RefreshCw className={`w-4 h-4 mr-2 ${refetching ? 'animate-spin text-indigo-600' : ''}`} /> {refetching ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
         </div>
@@ -298,6 +352,12 @@ const Events = () => {
         {eventsError && (
           <div className="p-3.5 rounded-lg text-sm flex items-center bg-red-50 border border-red-200 text-red-700 mb-4">
             <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" /> {eventsError}
+          </div>
+        )}
+
+        {refetching && (
+          <div className="relative h-1 mb-3 rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
+            <div className="absolute inset-y-0 left-0 w-1/3 bg-indigo-600 rounded-full animate-pulse" />
           </div>
         )}
 
@@ -311,13 +371,13 @@ const Events = () => {
               <table className="w-full">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Subject</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Source</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Ingested</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                    <Sortable label="Time" col="time" />
+                    <Sortable label="Type" col="type" />
+                    <Sortable label="Subject" col="subject" />
+                    <Sortable label="Source" col="source" className="hidden md:table-cell" />
+                    <Sortable label="ID" col="id" className="hidden lg:table-cell" />
+                    <Sortable label="Ingested" col="ingested" />
+                    <Sortable label="Status" col="status" className="text-right" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -327,7 +387,7 @@ const Events = () => {
                       <p className="text-slate-500 text-sm">No events found{typeFilter ? ` for type "${typeFilter}"` : ''}. Send one above!</p>
                     </td></tr>
                   ) : (
-                    events.map((ev, i) => {
+                    sortedEvents.map((ev, i) => {
                       const e = ev.event || {};
                       return (
                         <tr key={e.id || `${ev.ingestedAt}-${i}`} className="hover:bg-slate-50/60 transition">
@@ -354,14 +414,31 @@ const Events = () => {
               </table>
             </div>
 
-            <div className="flex items-center justify-between border-t border-slate-100 mt-4 pt-4">
-              <p className="text-xs text-slate-400">{events.length} event{events.length === 1 ? '' : 's'} loaded</p>
+            <div className="flex flex-wrap items-center justify-between border-t border-slate-100 mt-4 pt-4 gap-3">
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span>Rows per page:</span>
+                <div className="w-24">
+                  <SearchableSelect
+                    label=""
+                    value={pageSize}
+                    onChange={(v) => setPageSize(Number(v))}
+                    options={[5, 10, 20, 50, 100].map((s) => ({ value: s, label: `${s}` }))}
+                    placeholder="5"
+                  />
+                </div>
+                {totalCount != null ? (
+                  <span>{totalCount} total event{totalCount === 1 ? '' : 's'}</span>
+                ) : (
+                  <span>{events.length} event{events.length === 1 ? '' : 's'} loaded</span>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     const prev = prevCursors[prevCursors.length - 1];
-                    if (!prev) return;
+                    if (prev === undefined) return;
                     setPrevCursors((list) => list.slice(0, -1));
+                    setPageCursor(prev);
                     fetchEvents({ cursor: prev });
                   }}
                   disabled={prevCursors.length === 0 || eventsLoading}
@@ -370,7 +447,12 @@ const Events = () => {
                   <ChevronLeft className="w-4 h-4 mr-1" /> Prev
                 </button>
                 <button
-                  onClick={() => fetchEvents({ cursor: nextCursor })}
+                  onClick={() => {
+                    if (!nextCursor) return;
+                    setPrevCursors((prev) => [...prev, pageCursor]);
+                    setPageCursor(nextCursor);
+                    fetchEvents({ cursor: nextCursor });
+                  }}
                   disabled={!nextCursor || eventsLoading}
                   className="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
