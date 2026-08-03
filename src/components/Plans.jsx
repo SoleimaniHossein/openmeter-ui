@@ -3,6 +3,7 @@ import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle, Rocket, Archive, Lay
 import { getPlans, createPlan, updatePlan, publishPlan, archivePlan, deletePlan, createNextPlanVersion, getFeatures } from '../api/openmeter';
 import SearchableSelect from './SearchableSelect';
 import TextBox from './TextBox';
+import TextArea from './TextArea';
 import LoadingSpinner from './LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
 
@@ -608,10 +609,10 @@ const Plans = () => {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Description</label>
-                  <textarea
+                  <TextArea
                     rows="2"
                     placeholder="Optional description shown to customers"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   />

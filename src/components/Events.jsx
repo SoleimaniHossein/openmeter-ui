@@ -4,6 +4,7 @@ import { Send, RefreshCw, CheckCircle, XCircle, ChevronLeft, ChevronRight, Inbox
 import { sendEvent, getEvents, getMeters, getCustomers } from '../api/openmeter';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
+import TextArea from './TextArea';
 
 const formatTime = (iso) => {
   if (!iso) return '-';
@@ -292,10 +293,10 @@ const getSortValue = (ev) => {
                 </button>
               )}
             </div>
-            <textarea
+            <TextArea
               spellCheck="false"
               rows="8"
-              className="w-full px-3 py-2 font-mono text-sm border border-slate-300 dark:border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+              className="w-full font-mono bg-slate-50 dark:bg-slate-800"
               value={eventData.dataJson}
               onChange={(e) => setEventData({ ...eventData, dataJson: e.target.value })}
               placeholder='{ "method": "GET", "route": "/api", "duration_ms": 1 }'
