@@ -64,12 +64,12 @@ const EMPTY_FORM = {
 
 const getStatusBadge = (status) => {
   const map = {
-    active: 'bg-emerald-50 text-emerald-700',
-    draft: 'bg-slate-100 text-slate-600',
-    scheduled: 'bg-sky-100 text-sky-700',
-    archived: 'bg-amber-50 text-amber-700',
+    active: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    draft: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
+    scheduled: 'bg-sky-100 dark:bg-sky-500/15 text-sky-700 dark:text-sky-400',
+    archived: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400',
   };
-  return map[status] || 'bg-slate-100 text-slate-600';
+  return map[status] || 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
 };
 
 // Convert a form rate-card into an API PlanRateCard.
@@ -390,15 +390,15 @@ const Plans = () => {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Plans</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Plans</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Plans bundle rate cards (pricing) that customers subscribe to
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={fetchPlans}
-            className="inline-flex items-center px-4 py-2.5 rounded-lg bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+            className="inline-flex items-center px-4 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
           >
             <RefreshCw className="w-4 h-4 mr-2" /> Refresh
           </button>
@@ -412,13 +412,13 @@ const Plans = () => {
       </div>
 
       {message && (
-        <div className={`p-3.5 rounded-lg text-sm flex items-center border ${message.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+        <div className={`p-3.5 rounded-lg text-sm flex items-center border ${message.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400'}`}>
           {message.type === 'success' ? <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />}
           {message.text}
         </div>
       )}
 
-      <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm">
+      <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-sm">
         <Package className="w-4 h-4 mt-0.5 flex-shrink-0" />
         <p>
           A <strong>plan</strong> bundles <strong>rate cards</strong> (flat fee, per-unit, tiered,
@@ -430,53 +430,53 @@ const Plans = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {plans.length === 0 ? (
-          <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-12 text-center">
-            <Package className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-500 text-sm">No plans yet. Click "Add Plan".</p>
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-12 text-center">
+            <Package className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <p className="text-slate-500 dark:text-slate-400 text-sm">No plans yet. Click "Add Plan".</p>
           </div>
         ) : (
           plans.map((p) => (
-            <div key={p.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
-              <div className="p-5 border-b border-slate-100">
+            <div key={p.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
+              <div className="p-5 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold text-slate-900">{p.name}</h3>
-                    <p className="font-mono text-xs text-slate-400 mt-0.5">{p.key} · v{p.version}</p>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">{p.name}</h3>
+                    <p className="font-mono text-xs text-slate-400 dark:text-slate-500 mt-0.5">{p.key} · v{p.version}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(p.status)}`}>{p.status}</span>
                   </div>
                 </div>
-                {p.description && <p className="text-xs text-slate-500 mt-2">{p.description}</p>}
-                <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
-                  <span className="inline-flex px-2 py-0.5 rounded bg-slate-100 font-medium">{p.currency}</span>
-                  <span className="inline-flex px-2 py-0.5 rounded bg-slate-100 font-mono">{p.billingCadence}</span>
-                  <span className="inline-flex px-2 py-0.5 rounded bg-slate-100">{p.settlementMode}</span>
+                {p.description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{p.description}</p>}
+                <div className="flex items-center gap-3 mt-3 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="inline-flex px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 font-medium">{p.currency}</span>
+                  <span className="inline-flex px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 font-mono">{p.billingCadence}</span>
+                  <span className="inline-flex px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700">{p.settlementMode}</span>
                 </div>
               </div>
 
               <div className="p-5 flex-1 space-y-3">
-                {!p.phases?.length && <p className="text-sm text-slate-400">No phases</p>}
+                {!p.phases?.length && <p className="text-sm text-slate-400 dark:text-slate-500">No phases</p>}
                 {p.phases?.map((ph) => (
                   <div key={ph.id || ph.key}>
-                    <p className="text-xs font-medium text-slate-600 mb-2">
-                      <Layers className="w-3.5 h-3.5 inline mr-1 text-slate-400" />
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
+                      <Layers className="w-3.5 h-3.5 inline mr-1 text-slate-400 dark:text-slate-500" />
                       {ph.name} {ph.duration ? `(${ph.duration})` : '(entire term)'}
                     </p>
-                    {ph.rateCards?.length === 0 && <p className="text-xs text-slate-400">No rate cards</p>}
+                    {ph.rateCards?.length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500">No rate cards</p>}
                     {ph.rateCards?.map((rc) => {
                       const model = rc.price?.type === 'flat' ? 'Flat fee' : (rc.price?.type || rc.type);
                       return (
-                        <div key={rc.id || rc.key} className="flex items-center justify-between rounded-lg bg-slate-50 border border-slate-100 px-3 py-2 mb-1.5">
+                        <div key={rc.id || rc.key} className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 px-3 py-2 mb-1.5">
                           <div className="flex items-center gap-2 min-w-0">
-                            {rc.type === 'flat_fee' ? <Layers className="w-4 h-4 text-slate-400 flex-shrink-0" /> : <Package className="w-4 h-4 text-indigo-400 flex-shrink-0" />}
+                            {rc.type === 'flat_fee' ? <Layers className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" /> : <Package className="w-4 h-4 text-indigo-400 flex-shrink-0" />}
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-700 truncate">{rc.name}</p>
-                              <p className="font-mono text-[11px] text-slate-400 truncate">{model} · {rc.featureKey || 'flat fee'}</p>
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{rc.name}</p>
+                              <p className="font-mono text-[11px] text-slate-400 dark:text-slate-500 truncate">{model} · {rc.featureKey || 'flat fee'}</p>
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0 ml-2">
-                            <p className="font-mono text-sm text-slate-700">
+                            <p className="font-mono text-sm text-slate-700 dark:text-slate-200">
                               {rc.price?.type === 'flat'
                                 ? `${p.currency} ${rc.price.amount}${rc.billingCadence ? ` / ${rc.billingCadence}` : ' (one-time)'}`
                                 : rc.price?.type === 'tiered'
@@ -497,7 +497,7 @@ const Plans = () => {
                 ))}
               </div>
 
-              <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-end gap-2">
+              <div className="px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 dark:bg-slate-800/60 flex flex-wrap items-center justify-end gap-2">
                 {p.status === 'draft' && (
                   <button
                     onClick={() => handlePublish(p)}
@@ -509,7 +509,7 @@ const Plans = () => {
                 {p.status === 'draft' && (
                   <button
                     onClick={() => openEdit(p)}
-                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                   >
                     <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                   </button>
@@ -517,7 +517,7 @@ const Plans = () => {
                 {p.status === 'active' && (
                   <button
                     onClick={() => handleNewVersion(p)}
-                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition"
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition"
                   >
                     <GitBranch className="w-3.5 h-3.5 mr-1" /> Edit (new version)
                   </button>
@@ -525,7 +525,7 @@ const Plans = () => {
                 {p.status === 'scheduled' && (
                   <button
                     onClick={() => openEdit(p)}
-                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                   >
                     <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                   </button>
@@ -533,7 +533,7 @@ const Plans = () => {
                 {(p.status === 'active' || p.status === 'scheduled') && (
                   <button
                     onClick={() => handleArchive(p)}
-                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 transition"
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition"
                   >
                     <Archive className="w-3.5 h-3.5 mr-1" /> Archive
                   </button>
@@ -541,7 +541,7 @@ const Plans = () => {
                 {p.status !== 'active' && (
                   <button
                     onClick={() => handleDelete(p)}
-                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition"
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition"
                   >
                     <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
                   </button>
@@ -554,44 +554,44 @@ const Plans = () => {
 
       {/* Add/Edit Plan modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h3 className="text-lg font-semibold text-slate-900">
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-900 z-10">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {editingPlan ? `Edit ${editingPlan.name} v${editingPlan.version}` : 'Add Plan'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Name</label>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Name</label>
                   <input
                     type="text"
                     placeholder="API Basic Plan"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Key</label>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Key</label>
                   <input
                     type="text"
                     placeholder="api_basic_plan"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     value={formData.key}
                     onChange={(e) => setFormData({ ...formData, key: e.target.value })}
                     disabled={!!editingPlan}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Currency</label>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Currency</label>
                   <input
                     type="text"
                     placeholder="USD"
                     maxLength="3"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value.toUpperCase() })}
                   />
@@ -606,39 +606,39 @@ const Plans = () => {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Description</label>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Description</label>
                   <textarea
                     rows="2"
                     placeholder="Optional description shown to customers"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-4">
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Phases</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Phases</label>
                   <button
                     onClick={addPhase}
-                    className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
+                    className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition"
                   >
                     <Plus className="w-3.5 h-3.5 mr-1" /> Add phase
                   </button>
                 </div>
-                <p className="text-xs text-slate-400 mb-3">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">
                   Phases run in order and create time-based offering changes (e.g. a trial, then the paid plan).
                 </p>
 
                 {formData.phases.map((ph, pi) => (
-                  <div key={pi} className="rounded-xl border border-slate-200 p-4 mb-4 space-y-3">
+                  <div key={pi} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-500">Phase {pi + 1}</span>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Phase {pi + 1}</span>
                       {formData.phases.length > 1 && (
                         <button
                           onClick={() => removePhase(pi)}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                          className="p-1 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded"
                           title="Remove phase"
                         >
                           <X className="w-4 h-4" />
@@ -648,21 +648,21 @@ const Plans = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Key</label>
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Key</label>
                         <input
                           type="text"
                           placeholder="default"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           value={ph.key}
                           onChange={(e) => setPhase(pi, 'key', e.target.value)}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Name</label>
                         <input
                           type="text"
                           placeholder="Default"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           value={ph.name}
                           onChange={(e) => setPhase(pi, 'name', e.target.value)}
                         />
@@ -679,25 +679,25 @@ const Plans = () => {
                       </div>
                     </div>
 
-                    <div className="border-t border-slate-100 pt-3">
+                    <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
                       <div className="flex items-center justify-between mb-3">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Rate cards</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Rate cards</label>
                         <button
                           onClick={() => addRateCard(pi)}
-                          className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
+                          className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition"
                         >
                           <Plus className="w-3.5 h-3.5 mr-1" /> Add rate card
                         </button>
                       </div>
 
                       {(ph.rateCards || []).map((rc, ri) => (
-                        <div key={ri} className="rounded-xl border border-slate-200 p-4 mb-3 space-y-3">
+                        <div key={ri} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-3 space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-slate-500">Rate card {ri + 1}</span>
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Rate card {ri + 1}</span>
                             {ph.rateCards.length > 1 && (
                               <button
                                 onClick={() => removeRateCard(pi, ri)}
-                                className="p-1 text-red-500 hover:bg-red-50 rounded"
+                                className="p-1 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded"
                                 title="Remove"
                               >
                                 <X className="w-4 h-4" />
@@ -715,11 +715,11 @@ const Plans = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
+                              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Name</label>
                               <input
                                 type="text"
                                 placeholder="API Requests"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 value={rc.name}
                                 onChange={(e) => setRateCard(pi, ri, 'name', e.target.value)}
                               />
@@ -751,13 +751,13 @@ const Plans = () => {
 
                             {rc.model === 'unit' && (
                               <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Unit price</label>
+                                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Unit price</label>
                                 <input
                                   type="number"
                                   min="0"
                                   step="any"
                                   placeholder="0.01"
-                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                   value={rc.amount}
                                   onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
                                 />
@@ -767,25 +767,25 @@ const Plans = () => {
                             {rc.model === 'package' && (
                               <>
                                 <div>
-                                  <label className="block text-xs font-medium text-slate-500 mb-1">Price per package</label>
+                                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Price per package</label>
                                   <input
                                     type="number"
                                     min="0"
                                     step="any"
                                     placeholder="10.00"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     value={rc.amount}
                                     onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-medium text-slate-500 mb-1">Units per package</label>
+                                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Units per package</label>
                                   <input
                                     type="number"
                                     min="1"
                                     step="any"
                                     placeholder="20"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     value={rc.quantityPerPackage}
                                     onChange={(e) => setRateCard(pi, ri, 'quantityPerPackage', e.target.value)}
                                   />
@@ -795,23 +795,23 @@ const Plans = () => {
 
                             {rc.model === 'dynamic' && (
                               <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Multiplier (markup)</label>
+                                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Multiplier (markup)</label>
                                 <input
                                   type="number"
                                   min="0"
                                   step="any"
                                   placeholder="1.0"
-                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                   value={rc.multiplier}
                                   onChange={(e) => setRateCard(pi, ri, 'multiplier', e.target.value)}
                                 />
-                                <p className="text-xs text-slate-400 mt-1">1.0 = base price, 1.5 = +50% markup.</p>
+                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">1.0 = base price, 1.5 = +50% markup.</p>
                               </div>
                             )}
                           </div>
 
                           {rc.model === 'tiered' && (
-                            <div className="border-t border-slate-100 pt-3">
+                            <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
                               <div className="relative max-w-xs mb-3">
                                 <SearchableSelect
                                   label="Tiering mode"
@@ -828,7 +828,7 @@ const Plans = () => {
                                       min="0"
                                       step="any"
                                       placeholder="Up to (∞ = blank)"
-                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                       value={tier.upToAmount}
                                       onChange={(e) => setTier(pi, ri, t, 'upToAmount', e.target.value)}
                                     />
@@ -837,7 +837,7 @@ const Plans = () => {
                                       min="0"
                                       step="any"
                                       placeholder="Unit price"
-                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                       value={tier.unitPrice}
                                       onChange={(e) => setTier(pi, ri, t, 'unitPrice', e.target.value)}
                                     />
@@ -846,13 +846,13 @@ const Plans = () => {
                                       min="0"
                                       step="any"
                                       placeholder="Flat price"
-                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                       value={tier.flatPrice}
                                       onChange={(e) => setTier(pi, ri, t, 'flatPrice', e.target.value)}
                                     />
                                     <button
                                       onClick={() => removeTier(pi, ri, t)}
-                                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
+                                      className="p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
                                       title="Remove tier"
                                     >
                                       <X className="w-4 h-4" />
@@ -861,11 +861,11 @@ const Plans = () => {
                                 ))}
                                 <button
                                   onClick={() => addTier(pi, ri)}
-                                  className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                                  className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                                 >
                                   <Plus className="w-3.5 h-3.5 mr-1" /> Add tier
                                 </button>
-                                <p className="text-xs text-slate-400 mt-1">
+                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                                   Blank "up to" = open-ended (∞). Leave unit price or flat price blank to omit it.
                                 </p>
                               </div>
@@ -874,13 +874,13 @@ const Plans = () => {
 
                           {rc.model === 'flat' && (
                             <div>
-                              <label className="block text-xs font-medium text-slate-500 mb-1">Amount</label>
+                              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Amount</label>
                               <input
                                 type="number"
                                 min="0"
                                 step="any"
                                 placeholder="199.00"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 value={rc.amount}
                                 onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
                               />
@@ -893,8 +893,8 @@ const Plans = () => {
                 ))}
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 bg-white">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Cancel</button>
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-slate-900">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Cancel</button>
               <button
                 onClick={handleSubmit}
                 disabled={saving}

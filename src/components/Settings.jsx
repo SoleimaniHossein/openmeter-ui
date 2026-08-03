@@ -49,23 +49,23 @@ const Settings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
-          <Key className="w-5 h-5 mr-2 text-blue-600" />
+          <Key className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
           API Settings
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
               API Token
             </label>
             <input 
               type="password" 
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" 
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono bg-white dark:bg-slate-800 text-slate-900 dark:text-white" 
               value={apiToken} 
               onChange={e => setApiTokenState(e.target.value)} 
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
               Token is stored locally in your browser
             </p>
           </div>
@@ -79,31 +79,31 @@ const Settings = () => {
             <button 
               onClick={handleTestConnection} 
               disabled={testing} 
-              className="flex items-center px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition disabled:opacity-50"
+              className="flex items-center px-4 py-2 bg-gray-600 dark:bg-slate-600 text-white rounded hover:bg-gray-700 dark:hover:bg-slate-500 transition disabled:opacity-50"
             >
               {testing && <RefreshCw className="w-4 h-4 mr-2 animate-spin" />}
               Test Connection
             </button>
           </div>
           {saved && (
-            <div className="flex items-center text-green-600 bg-green-50 p-2 rounded">
+            <div className="flex items-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 p-2 rounded">
               <CheckCircle className="w-4 h-4 mr-2" />
               Token saved successfully!
             </div>
           )}
           {testResult && (
-            <div className={`flex items-center ${testResult.success ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'} p-2 rounded`}>
+            <div className={`flex items-center ${testResult.success ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10'} p-2 rounded`}>
               {testResult.success ? <CheckCircle className="w-4 h-4 mr-2" /> : <XCircle className="w-4 h-4 mr-2" />}
               {testResult.message}
             </div>
           )}
         </div>
       </div>
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold mb-4">About</h3>
-        <p className="text-gray-600 text-sm">OpenMeter Admin UI v1.0</p>
-        <p className="text-gray-500 text-xs mt-1">Connects to OpenMeter API v3</p>
-        <p className="text-gray-500 text-xs">All API requests go through Vite proxy to avoid CORS issues</p>
+        <p className="text-gray-600 dark:text-slate-300 text-sm">OpenMeter Admin UI v1.0</p>
+        <p className="text-gray-500 dark:text-slate-400 text-xs mt-1">Connects to OpenMeter API v3</p>
+        <p className="text-gray-500 dark:text-slate-400 text-xs">All API requests go through Vite proxy to avoid CORS issues</p>
       </div>
     </div>
   );

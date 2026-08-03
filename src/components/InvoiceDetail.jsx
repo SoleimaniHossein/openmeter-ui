@@ -39,8 +39,8 @@ const ActionButton = ({ onClick, disabled, loading, icon: Icon, label, color }) 
 
 const Field = ({ label, value }) => (
   <div>
-    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-    <p className="text-sm text-slate-700">{value || '—'}</p>
+    <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1">{label}</p>
+    <p className="text-sm text-slate-700 dark:text-slate-200">{value || '—'}</p>
   </div>
 );
 
@@ -97,22 +97,22 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
 
   return (
     <>
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100">
+        <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
-              <h3 className="text-lg font-bold text-slate-900">Invoice {invoice.number || invoice.id}</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Invoice {invoice.number || invoice.id}</h3>
               <InvoiceStatusBadge status={invoice.status} extendedStatus={invoice.statusDetails?.extendedStatus} />
             </div>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {invoice.type === 'credit_note' ? 'Credit note' : 'Invoice'}
               {invoice.issuedAt && <> · Issued {formatDate(invoice.issuedAt)}</>}
               {invoice.dueAt && <> · Due {formatDate(invoice.dueAt)}</>}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition">
+          <button onClick={onClose} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:bg-slate-600 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -120,25 +120,25 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center">
+            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 text-sm flex items-center">
               <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" /> {error}
             </div>
           )}
 
           {/* Parties */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 bg-slate-50 rounded-xl border border-slate-100 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Supplier</p>
-              <p className="font-semibold text-slate-900">{invoice.supplier?.name || '—'}</p>
-              {invoice.supplier?.key && <p className="text-sm text-slate-500 font-mono">{invoice.supplier.key}</p>}
-              {invoice.supplier?.taxId?.code && <p className="text-sm text-slate-500">Tax ID: {invoice.supplier.taxId.code}</p>}
+              <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1">Supplier</p>
+              <p className="font-semibold text-slate-900 dark:text-white">{invoice.supplier?.name || '—'}</p>
+              {invoice.supplier?.key && <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">{invoice.supplier.key}</p>}
+              {invoice.supplier?.taxId?.code && <p className="text-sm text-slate-500 dark:text-slate-400">Tax ID: {invoice.supplier.taxId.code}</p>}
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Customer</p>
-              <p className="font-semibold text-slate-900">{invoice.customer?.name || '—'}</p>
-              {invoice.customer?.key && <p className="text-sm text-slate-500 font-mono">{invoice.customer.key}</p>}
+              <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1">Customer</p>
+              <p className="font-semibold text-slate-900 dark:text-white">{invoice.customer?.name || '—'}</p>
+              {invoice.customer?.key && <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">{invoice.customer.key}</p>}
               {invoice.customer?.usageAttribution?.subjectKeys?.length > 0 && (
-                <p className="text-sm text-slate-500">Subjects: {invoice.customer.usageAttribution.subjectKeys.join(', ')}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Subjects: {invoice.customer.usageAttribution.subjectKeys.join(', ')}</p>
               )}
             </div>
           </div>
@@ -150,31 +150,31 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
           </div>
 
           {/* Line items */}
-          <div className="overflow-hidden border border-slate-200 rounded-xl mb-6">
+          <div className="overflow-hidden border border-slate-200 dark:border-slate-700 rounded-xl mb-6">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+              <thead className="bg-slate-50 dark:bg-slate-800">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Item</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Period</th>
-                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
-                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Item</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Period</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Qty</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {lines.length === 0 && (
-                  <tr><td colSpan="4" className="px-4 py-8 text-center text-slate-400">
+                  <tr><td colSpan="4" className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">
                     {invoice.status === 'gathering' ? 'Gathering usage — no lines finalized yet.' : 'No line items.'}
                   </td></tr>
                 )}
                 {lines.map((line) => (
                   <tr key={line.id}>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">{line.name}</p>
-                      {line.description && <p className="text-xs text-slate-400">{line.description}</p>}
+                      <p className="font-medium text-slate-800 dark:text-slate-100">{line.name}</p>
+                      {line.description && <p className="text-xs text-slate-400 dark:text-slate-500">{line.description}</p>}
                     </td>
-                    <td className="px-4 py-3 text-slate-500 hidden sm:table-cell">{formatPeriod(line.period)}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{Number(line.quantity ?? 0).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 hidden sm:table-cell">{formatPeriod(line.period)}</td>
+                    <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-300">{Number(line.quantity ?? 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
                       {formatMoney(line.totals?.total, currency)}
                     </td>
                   </tr>
@@ -186,27 +186,27 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
           {/* Totals */}
           <div className="flex justify-end mb-6">
             <div className="w-full max-w-xs space-y-2 text-sm">
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-slate-600 dark:text-slate-300">
                 <span>Subtotal</span>
                 <span>{formatMoney(totals.amount, currency)}</span>
               </div>
               {Number(totals.discountsTotal || 0) !== 0 && (
-                <div className="flex justify-between text-slate-600">
+                <div className="flex justify-between text-slate-600 dark:text-slate-300">
                   <span>Discounts</span>
                   <span>-{formatMoney(totals.discountsTotal, currency)}</span>
                 </div>
               )}
               {Number(totals.creditsTotal || 0) !== 0 && (
-                <div className="flex justify-between text-slate-600">
+                <div className="flex justify-between text-slate-600 dark:text-slate-300">
                   <span>Credits</span>
                   <span>-{formatMoney(totals.creditsTotal, currency)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-slate-600 dark:text-slate-300">
                 <span>Taxes</span>
                 <span>{formatMoney(totals.taxesTotal, currency)}</span>
               </div>
-              <div className="flex justify-between font-bold text-slate-900 border-t border-slate-200 pt-2">
+              <div className="flex justify-between font-bold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-700 pt-2">
                 <span>Total</span>
                 <span>{formatMoney(totals.total, currency)}</span>
               </div>
@@ -214,16 +214,16 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
           </div>
 
           {invoice.externalIds?.invoicing && (
-            <p className="text-xs text-slate-400">External invoicing ID: {invoice.externalIds.invoicing}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">External invoicing ID: {invoice.externalIds.invoicing}</p>
           )}
         </div>
 
         {/* Actions footer */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4 border-t border-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={handleRefresh}
             disabled={loading}
-            className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
+            className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:bg-slate-600 transition disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </button>

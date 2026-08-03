@@ -262,13 +262,13 @@ const Customers = () => {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Customers</h2>
-          <p className="text-sm text-slate-500 mt-0.5">Manage customers and generate their invoices</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Customers</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage customers and generate their invoices</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={fetchCustomers}
-            className="inline-flex items-center px-4 py-2.5 rounded-lg bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+            className="inline-flex items-center px-4 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
           >
             <RefreshCw className="w-4 h-4 mr-2" /> Refresh
           </button>
@@ -282,16 +282,16 @@ const Customers = () => {
       </div>
 
       {message && (
-        <div className={`p-3.5 rounded-lg text-sm border ${message.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+        <div className={`p-3.5 rounded-lg text-sm border ${message.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400'}`}>
           <div className="flex items-start">
             {message.type === 'success' ? <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />}
             <div className="flex-1">
               <p className="font-medium">{message.title || message.text}</p>
-              {message.hint && <p className={`mt-1 text-xs ${message.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>{message.hint}</p>}
+              {message.hint && <p className={`mt-1 text-xs ${message.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{message.hint}</p>}
               {message.action && (
                 <button
                   onClick={message.action.onClick}
-                  className="mt-2 inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-700 text-xs font-medium hover:bg-red-50 transition"
+                  className="mt-2 inline-flex items-center px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 text-xs font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition"
                 >
                   <Send className="w-3.5 h-3.5 mr-1" /> {message.action.label}
                 </button>
@@ -301,7 +301,7 @@ const Customers = () => {
         </div>
       )}
 
-      <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm">
+      <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-sm">
         <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
         <p>
           To invoice a customer you need billable lines. Usage events only become lines when the customer
@@ -311,53 +311,53 @@ const Customers = () => {
         </p>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Customer</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden xl:table-cell">Key</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Subjects</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Plan</th>
-              <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Customer</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden xl:table-cell">Key</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden lg:table-cell">Subjects</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Plan</th>
+              <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {customers.length === 0 ? (
               <tr><td colSpan="5" className="px-6 py-12 text-center">
-                <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-500 text-sm">No customers yet. Click "Add Customer".</p>
+                <Users className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-slate-500 dark:text-slate-400 text-sm">No customers yet. Click "Add Customer".</p>
               </td></tr>
             ) : (
               customers.map((c) => {
                 const subscribed = hasSubscription(c);
                 return (
-                  <tr key={c.id} className="hover:bg-slate-50/60 transition">
+                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/60/60 dark:hover:bg-slate-800/40 transition">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-600 text-xs font-bold">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-600 dark:text-indigo-400 text-xs font-bold">
                           {getInitials(c.name)}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{c.name}</p>
-                          {c.primaryEmail && <p className="text-xs text-slate-400">{c.primaryEmail}</p>}
+                          <p className="font-medium text-slate-900 dark:text-white">{c.name}</p>
+                          {c.primaryEmail && <p className="text-xs text-slate-400 dark:text-slate-500">{c.primaryEmail}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-mono text-sm text-slate-600 hidden xl:table-cell">{c.key || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500 hidden lg:table-cell">
+                    <td className="px-6 py-4 font-mono text-sm text-slate-600 dark:text-slate-300 hidden xl:table-cell">{c.key || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell">
                       {c.usageAttribution?.subjectKeys?.length
                         ? <span className="font-mono text-xs">{c.usageAttribution.subjectKeys.join(', ')}</span>
                         : '-'}
                     </td>
                     <td className="px-6 py-4 hidden md:table-cell">
                       {subscribed ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
                           <BadgeCheck className="w-3.5 h-3.5 mr-1" />
                           {c.subscriptions.find((s) => s.status === 'active')?.name || 'Subscribed'}
                         </span>
                       ) : (
-                        <span className="inline-flex px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium">
+                        <span className="inline-flex px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-medium">
                           No plan
                         </span>
                       )}
@@ -367,7 +367,7 @@ const Customers = () => {
                         {!subscribed && plans.length > 0 && (
                           <button
                             onClick={() => openSubscribe(c)}
-                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-violet-50 text-violet-600 hover:bg-violet-100 transition"
+                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition"
                             title="Subscribe this customer to a plan so usage becomes billable"
                           >
                             <PackagePlus className="w-3.5 h-3.5 mr-1" /> Subscribe
@@ -376,7 +376,7 @@ const Customers = () => {
                         {subscribed && plans.length > 0 && (
                           <button
                             onClick={() => openChangePlan(c)}
-                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 transition"
+                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition"
                             title="Change this customer's subscription to a different plan"
                           >
                             <ArrowLeftRight className="w-3.5 h-3.5 mr-1" /> Change
@@ -385,7 +385,7 @@ const Customers = () => {
                         {subscribed && (
                           <button
                             onClick={() => openCancel(c)}
-                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition"
+                            className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition"
                             title="Cancel this customer's subscription"
                           >
                             <Ban className="w-3.5 h-3.5 mr-1" /> Cancel
@@ -394,7 +394,7 @@ const Customers = () => {
                         <button
                           onClick={() => handleGenerateInvoice(c)}
                           disabled={invoicingId === c.id}
-                          className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Generate invoice from pending line items"
                         >
                           {invoicingId === c.id ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <FileText className="w-3.5 h-3.5 mr-1" />}
@@ -402,13 +402,13 @@ const Customers = () => {
                         </button>
                         <button
                           onClick={() => handleViewInvoices(c)}
-                          className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                          className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition"
                           title="View this customer's invoices"
                         >
                           <Receipt className="w-3.5 h-3.5 mr-1" /> Invoices
                         </button>
-                        <button onClick={() => handleEdit(c)} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Edit"><Edit2 className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(c.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(c)} className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(c.id)} className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg" title="Delete"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -421,75 +421,75 @@ const Customers = () => {
 
       {/* Add/Edit Customer modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-900">{editingCustomer ? 'Edit' : 'Add'} Customer</h3>
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editingCustomer ? 'Edit' : 'Add'} Customer</h3>
             </div>
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Key</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Key</label>
                 <input
                   type="text"
                   placeholder="e.g. customer_001"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.key}
                   onChange={(e) => setFormData({ ...formData, key: e.target.value })}
                   disabled={!!editingCustomer}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Name</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Name</label>
                 <input
                   type="text"
                   placeholder="ACME Inc."
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Email</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Email</label>
                 <input
                   type="email"
                   placeholder="billing@acme.com"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.primaryEmail}
                   onChange={(e) => setFormData({ ...formData, primaryEmail: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Currency</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Currency</label>
                 <input
                   type="text"
                   placeholder="USD"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                 />
-                <p className="text-xs text-slate-400 mt-1.5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
                   Must match the plan's currency. Leaving it blank lets the plan's currency be used.
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Subjects <span className="text-slate-400 normal-case font-normal">(comma-separated)</span>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+                  Subjects <span className="text-slate-400 dark:text-slate-500 normal-case font-normal">(comma-separated)</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. customer-001, user-42"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.subjects}
                   onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
                 />
-                <p className="text-xs text-slate-400 mt-1.5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
                   Subject keys map usage events to this customer. Send events with a matching{' '}
                   <code className="text-[11px]">subject</code> to generate billable usage lines.
                 </p>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Cancel</button>
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Cancel</button>
               <button onClick={handleSubmit} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">Save</button>
             </div>
           </div>
@@ -498,11 +498,11 @@ const Customers = () => {
 
       {/* Subscribe modal */}
       {subscribeCustomer && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Subscribe {subscribeCustomer.name}</h3>
-              <button onClick={() => setSubscribeCustomer(null)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Subscribe {subscribeCustomer.name}</h3>
+              <button onClick={() => setSubscribeCustomer(null)} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
               <div>
@@ -514,11 +514,11 @@ const Customers = () => {
                   placeholder="Select a plan"
                 />
                 {getPlan(subscribePlanKey) && (
-                  <ul className="mt-2 space-y-1 text-xs text-slate-500">
+                  <ul className="mt-2 space-y-1 text-xs text-slate-500 dark:text-slate-400">
                     {getPlan(subscribePlanKey).phases?.flatMap((ph) => ph.rateCards || []).map((rc, i) => (
                       <li key={i} className="flex items-center justify-between">
                         <span>{rc.name}</span>
-                        <span className="font-mono text-slate-400">
+                        <span className="font-mono text-slate-400 dark:text-slate-500">
                           {rc.price?.type === 'usage_based' || rc.price?.type === 'unit'
                             ? `${rc.price.amount || 0} / ${rc.price.aggregation || 'unit'}`
                             : rc.price?.amount || ''}
@@ -530,7 +530,7 @@ const Customers = () => {
               </div>
               {subscribeCustomer.currency && getPlan(subscribePlanKey)?.currency &&
                 subscribeCustomer.currency.toUpperCase() !== getPlan(subscribePlanKey).currency.toUpperCase() && (
-                <label className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs cursor-pointer">
+                <label className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs cursor-pointer">
                   <input
                     type="checkbox"
                     checked={alignCurrency}
@@ -543,14 +543,14 @@ const Customers = () => {
                   </span>
                 </label>
               )}
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
                 Once subscribed, send usage events for subject{' '}
                 <code className="text-[11px]">{(subscribeCustomer.usageAttribution?.subjectKeys || ['<subject key>'])[0]}</code>{' '}
                 to generate billable lines, then generate an invoice.
               </p>
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setSubscribeCustomer(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Cancel</button>
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button onClick={() => setSubscribeCustomer(null)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Cancel</button>
               <button
                 onClick={handleSubscribe}
                 disabled={subscribing}
@@ -567,17 +567,17 @@ const Customers = () => {
 
       {/* Change plan modal */}
       {changingCustomer && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Change plan for {changingCustomer.name}</h3>
-              <button onClick={() => setChangingCustomer(null)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Change plan for {changingCustomer.name}</h3>
+              <button onClick={() => setChangingCustomer(null)} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
               {(() => {
                 const current = getActiveSubscription(changingCustomer);
                 return (
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-600">
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
                     Current plan: <strong>{current?.name || current?.plan?.key || 'Unknown'}</strong>
                     {current?.activeTo && ` · active until ${new Date(current.activeTo).toLocaleDateString()}`}
                   </div>
@@ -594,11 +594,11 @@ const Customers = () => {
                   placeholder="Select a plan"
                 />
                 {getPlan(changePlanKey) && (
-                  <ul className="mt-2 space-y-1 text-xs text-slate-500">
+                  <ul className="mt-2 space-y-1 text-xs text-slate-500 dark:text-slate-400">
                     {getPlan(changePlanKey).phases?.flatMap((ph) => ph.rateCards || []).map((rc, i) => (
                       <li key={i} className="flex items-center justify-between">
                         <span>{rc.name}</span>
-                        <span className="font-mono text-slate-400">
+                        <span className="font-mono text-slate-400 dark:text-slate-500">
                           {rc.price?.type === 'usage_based' || rc.price?.type === 'unit'
                             ? `${rc.price.amount || 0} / ${rc.price.aggregation || 'unit'}`
                             : rc.price?.amount || ''}
@@ -609,7 +609,7 @@ const Customers = () => {
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">When to switch</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">When to switch</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { value: 'immediate', label: 'Immediately' },
@@ -621,8 +621,8 @@ const Customers = () => {
                       onClick={() => setChangeTiming(opt.value)}
                       className={`px-3 py-2 rounded-lg border text-sm font-medium transition ${
                         changeTiming === opt.value
-                          ? 'bg-amber-50 border-amber-300 text-amber-700'
-                          : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                          ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-400'
+                          : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                       }`}
                     >
                       {opt.label}
@@ -631,8 +631,8 @@ const Customers = () => {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setChangingCustomer(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Cancel</button>
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button onClick={() => setChangingCustomer(null)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Cancel</button>
               <button
                 onClick={handleChangePlan}
                 disabled={changing || !changePlanKey}
@@ -648,24 +648,24 @@ const Customers = () => {
 
       {/* Cancel subscription modal */}
       {cancelingCustomer && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Cancel subscription for {cancelingCustomer.name}</h3>
-              <button onClick={() => setCancelingCustomer(null)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Cancel subscription for {cancelingCustomer.name}</h3>
+              <button onClick={() => setCancelingCustomer(null)} className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg" title="Close"><X className="w-4 h-4" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
               {(() => {
                 const current = getActiveSubscription(cancelingCustomer);
                 return (
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-600">
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
                     <strong>{current?.name || current?.plan?.key || 'Active subscription'}</strong>
                     {current?.activeTo && ` · active until ${new Date(current.activeTo).toLocaleDateString()}`}
                   </div>
                 );
               })()}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">When to cancel</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">When to cancel</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { value: 'immediate', label: 'Immediately' },
@@ -677,23 +677,23 @@ const Customers = () => {
                       onClick={() => setCancelTiming(opt.value)}
                       className={`px-3 py-2 rounded-lg border text-sm font-medium transition ${
                         cancelTiming === opt.value
-                          ? 'bg-red-50 border-red-300 text-red-700'
-                          : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                          ? 'bg-red-50 dark:bg-red-500/10 border-red-300 dark:border-red-500/30 text-red-700 dark:text-red-400'
+                          : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                       }`}
                     >
                       {opt.label}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-slate-400 mt-1.5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
                   {cancelTiming === 'immediate'
                     ? 'Usage stops being billable as soon as the subscription is canceled.'
                     : 'The subscription stays active until the end of the current billing period, then cancels.'}
                 </p>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setCancelingCustomer(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Keep subscription</button>
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+              <button onClick={() => setCancelingCustomer(null)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">Keep subscription</button>
               <button
                 onClick={handleCancel}
                 disabled={canceling}
