@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send, RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { sendEvent } from '../api/openmeter';
 import SearchableSelect from './SearchableSelect';
+import TextBox from './TextBox';
 
 const SendEvent = () => {
   const [loading, setLoading] = useState(false);
@@ -113,9 +114,9 @@ const SendEvent = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
               Customer Subject *
             </label>
-            <input
+            <TextBox
               type="text"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              className="w-full"
               value={eventData.subject}
               onChange={(e) => setEventData({ ...eventData, subject: e.target.value })}
               placeholder="e.g., customer_123"
@@ -125,9 +126,9 @@ const SendEvent = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
               Path
             </label>
-            <input
+            <TextBox
               type="text"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              className="w-full"
               value={eventData.path}
               onChange={(e) => setEventData({ ...eventData, path: e.target.value })}
               placeholder="/api/users"
@@ -148,10 +149,10 @@ const SendEvent = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
               Count
             </label>
-            <input
+            <TextBox
               type="number"
               min="1"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              className="w-full"
               value={eventData.count}
               onChange={(e) => setEventData({ ...eventData, count: parseInt(e.target.value) || 1 })}
             />

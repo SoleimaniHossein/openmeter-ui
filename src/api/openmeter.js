@@ -166,6 +166,10 @@ export const deleteCustomer = async (customerId) => {
 };
 
 // ============ FEATURES ============
+// Per OpenMeter docs, features are immutable after creation: there is no
+// update endpoint. Features can only be created, listed, retrieved, and
+// archived (DELETE). The `key` is the immutable identifier used throughout
+// the API.
 export const getFeatures = async (params = {}) => {
   try {
     const response = await api.get('/v1/features', { params: { pageSize: 100, ...params } });
@@ -189,24 +193,19 @@ export const createFeature = async (featureData) => {
   }
 };
 
-export const updateFeature = async (featureId, featureData) => {
+// There is no update endpoint for features in the v1 API. If you need to
+// change a feature, archive it and create a new one with a new key.
+export const archiveFeature = async (featureId) => {
   try {
-    const response = await api.put(`/v1/features/${featureId}`, featureData);
-    return response.data;
+    await api.delete(`/v1/features/${featureId}`);
   } catch (error) {
-    console.error('Error updating feature:', error);
+    console.error('Error archiving feature:', error);
     throw error;
   }
 };
 
-export const deleteFeature = async (featureId) => {
-  try {
-    await api.delete(`/v1/features/${featureId}`);
-  } catch (error) {
-    console.error('Error deleting feature:', error);
-    throw error;
-  }
-};
+// Backwards-compatible alias used elsewhere in the UI.
+export const deleteFeature = archiveFeature;
 
 // ============ EVENTS ============
 export const sendEvent = async (event) => {

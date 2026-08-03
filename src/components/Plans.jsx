@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle, Rocket, Archive, Layers, Package, X, Edit2, GitBranch } from 'lucide-react';
 import { getPlans, createPlan, updatePlan, publishPlan, archivePlan, deletePlan, createNextPlanVersion, getFeatures } from '../api/openmeter';
 import SearchableSelect from './SearchableSelect';
+import TextBox from './TextBox';
 import LoadingSpinner from './LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
 
@@ -566,20 +567,20 @@ const Plans = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Name</label>
-                  <input
+                  <TextBox
                     type="text"
                     placeholder="API Basic Plan"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Key</label>
-                  <input
+                  <TextBox
                     type="text"
                     placeholder="api_basic_plan"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full"
                     value={formData.key}
                     onChange={(e) => setFormData({ ...formData, key: e.target.value })}
                     disabled={!!editingPlan}
@@ -587,11 +588,11 @@ const Plans = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Currency</label>
-                  <input
+                  <TextBox
                     type="text"
                     placeholder="USD"
                     maxLength="3"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
+                    className="w-full uppercase"
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value.toUpperCase() })}
                   />
@@ -649,20 +650,20 @@ const Plans = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Key</label>
-                        <input
+                        <TextBox
                           type="text"
                           placeholder="default"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full"
                           value={ph.key}
                           onChange={(e) => setPhase(pi, 'key', e.target.value)}
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Name</label>
-                        <input
+                        <TextBox
                           type="text"
                           placeholder="Default"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full"
                           value={ph.name}
                           onChange={(e) => setPhase(pi, 'name', e.target.value)}
                         />
@@ -716,10 +717,10 @@ const Plans = () => {
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Name</label>
-                              <input
+                              <TextBox
                                 type="text"
                                 placeholder="API Requests"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full"
                                 value={rc.name}
                                 onChange={(e) => setRateCard(pi, ri, 'name', e.target.value)}
                               />
@@ -752,12 +753,12 @@ const Plans = () => {
                             {rc.model === 'unit' && (
                               <div>
                                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Unit price</label>
-                                <input
+                                <TextBox
                                   type="number"
                                   min="0"
                                   step="any"
                                   placeholder="0.01"
-                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  className="w-full"
                                   value={rc.amount}
                                   onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
                                 />
@@ -768,24 +769,24 @@ const Plans = () => {
                               <>
                                 <div>
                                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Price per package</label>
-                                  <input
+                                  <TextBox
                                     type="number"
                                     min="0"
                                     step="any"
                                     placeholder="10.00"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full"
                                     value={rc.amount}
                                     onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
                                   />
                                 </div>
                                 <div>
                                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Units per package</label>
-                                  <input
+                                  <TextBox
                                     type="number"
                                     min="1"
                                     step="any"
                                     placeholder="20"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full"
                                     value={rc.quantityPerPackage}
                                     onChange={(e) => setRateCard(pi, ri, 'quantityPerPackage', e.target.value)}
                                   />
@@ -796,12 +797,12 @@ const Plans = () => {
                             {rc.model === 'dynamic' && (
                               <div>
                                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Multiplier (markup)</label>
-                                <input
+                                <TextBox
                                   type="number"
                                   min="0"
                                   step="any"
                                   placeholder="1.0"
-                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  className="w-full"
                                   value={rc.multiplier}
                                   onChange={(e) => setRateCard(pi, ri, 'multiplier', e.target.value)}
                                 />
@@ -823,30 +824,30 @@ const Plans = () => {
                               <div className="space-y-2">
                                 {rc.tiers.map((tier, t) => (
                                   <div key={t} className="flex items-center gap-2">
-                                    <input
+                                    <TextBox
                                       type="number"
                                       min="0"
                                       step="any"
                                       placeholder="Up to (∞ = blank)"
-                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-1/3"
                                       value={tier.upToAmount}
                                       onChange={(e) => setTier(pi, ri, t, 'upToAmount', e.target.value)}
                                     />
-                                    <input
+                                    <TextBox
                                       type="number"
                                       min="0"
                                       step="any"
                                       placeholder="Unit price"
-                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-1/3"
                                       value={tier.unitPrice}
                                       onChange={(e) => setTier(pi, ri, t, 'unitPrice', e.target.value)}
                                     />
-                                    <input
+                                    <TextBox
                                       type="number"
                                       min="0"
                                       step="any"
                                       placeholder="Flat price"
-                                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      className="w-1/3"
                                       value={tier.flatPrice}
                                       onChange={(e) => setTier(pi, ri, t, 'flatPrice', e.target.value)}
                                     />
@@ -875,12 +876,12 @@ const Plans = () => {
                           {rc.model === 'flat' && (
                             <div>
                               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Amount</label>
-                              <input
+                              <TextBox
                                 type="number"
                                 min="0"
                                 step="any"
                                 placeholder="199.00"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full"
                                 value={rc.amount}
                                 onChange={(e) => setRateCard(pi, ri, 'amount', e.target.value)}
                               />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import TextBox from './TextBox';
 
 const ConfirmDialog = ({
   open,
@@ -62,7 +63,7 @@ const ConfirmDialog = ({
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
                     {inputLabel}
                   </label>
-                  <input
+                  <TextBox
                     type="text"
                     autoFocus
                     value={value}
@@ -71,7 +72,7 @@ const ConfirmDialog = ({
                       if (e.key === 'Enter' && canConfirm) onConfirm(value.trim());
                     }}
                     placeholder={inputPlaceholder}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2"
                   />
                 </div>
               )}

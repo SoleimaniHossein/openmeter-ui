@@ -5,6 +5,7 @@ import { getCustomers, createCustomer, updateCustomer, deleteCustomer, invoiceCu
 import { describeInvoiceError, hasSubscription } from '../utils/billing';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
+import TextBox from './TextBox';
 import { useConfirm } from '../hooks/useConfirm';
 
 const EMPTY_FORM = { key: '', name: '', primaryEmail: '', currency: '', subjects: '' };
@@ -429,10 +430,10 @@ const Customers = () => {
             <div className="px-6 py-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Key</label>
-                <input
+                <TextBox
                   type="text"
                   placeholder="e.g. customer_001"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full"
                   value={formData.key}
                   onChange={(e) => setFormData({ ...formData, key: e.target.value })}
                   disabled={!!editingCustomer}
@@ -440,30 +441,30 @@ const Customers = () => {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Name</label>
-                <input
+                <TextBox
                   type="text"
                   placeholder="ACME Inc."
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Email</label>
-                <input
+                <TextBox
                   type="email"
                   placeholder="billing@acme.com"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full"
                   value={formData.primaryEmail}
                   onChange={(e) => setFormData({ ...formData, primaryEmail: e.target.value })}
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Currency</label>
-                <input
+                <TextBox
                   type="text"
                   placeholder="USD"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full"
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                 />
@@ -475,10 +476,10 @@ const Customers = () => {
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
                   Subjects <span className="text-slate-400 dark:text-slate-500 normal-case font-normal">(comma-separated)</span>
                 </label>
-                <input
+                <TextBox
                   type="text"
                   placeholder="e.g. customer-001, user-42"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full"
                   value={formData.subjects}
                   onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
                 />

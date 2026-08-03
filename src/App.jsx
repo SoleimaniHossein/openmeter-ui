@@ -12,6 +12,7 @@ import Customers from './components/Customers';
 import Events from './components/Events';
 import Invoices from './components/Invoices';
 import Settings from './components/Settings';
+import TextBox from './components/TextBox';
 
 function App() {
   const [apiToken, setApiTokenState] = useState(getApiToken());
@@ -46,10 +47,10 @@ function App() {
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">OpenMeter Admin</h1>
             <p className="text-gray-500 dark:text-slate-400 mt-1 text-sm">Enter your API token to connect</p>
           </div>
-          <input
+          <TextBox
             type="password"
             placeholder="API Token"
-            className="w-full px-4 py-2.5 border rounded-lg mb-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full mb-4"
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleLogin(e.target.value);
             }}

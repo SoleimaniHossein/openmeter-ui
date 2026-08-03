@@ -3,6 +3,7 @@ import { Plus, RefreshCw, Edit2, Trash2, Eye, AlertCircle, CheckCircle, Activity
 import { getMeters, createMeter, updateMeter, deleteMeter, queryMeter } from '../api/openmeter';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
+import TextBox from './TextBox';
 import { useConfirm } from '../hooks/useConfirm';
 
 const AGGREGATIONS = ['SUM', 'COUNT', 'UNIQUE_COUNT', 'AVG', 'MIN', 'MAX', 'LATEST'];
@@ -267,20 +268,20 @@ const Meters = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Name</label>
-                  <input
+                  <TextBox
                     type="text"
                     placeholder="API Requests"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Slug (key)</label>
-                  <input
+                  <TextBox
                     type="text"
                     placeholder="api_requests"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                     disabled={!!editingMeter}
@@ -288,10 +289,10 @@ const Meters = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Event Type</label>
-                  <input
+                  <TextBox
                     type="text"
                     placeholder="api.request"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full"
                     value={formData.eventType}
                     onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
                     disabled={!!editingMeter}
@@ -314,10 +315,10 @@ const Meters = () => {
                   <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
                     Value Property {needsValue && <span className="text-amber-500 dark:text-amber-400 normal-case">(required for {formData.aggregation})</span>}
                   </label>
-                  <input
+                  <TextBox
                     type="text"
                     placeholder={needsValue ? '$.tokens' : 'not used for COUNT'}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full"
                     value={formData.valueProperty}
                     onChange={(e) => setFormData({ ...formData, valueProperty: e.target.value })}
                     disabled={!needsValue}
@@ -331,10 +332,10 @@ const Meters = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Description</label>
-                <input
+                <TextBox
                   type="text"
                   placeholder="AI Token Usage"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
@@ -356,18 +357,18 @@ const Meters = () => {
                 {groupByEntries.length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">Optional. Group usage by event data fields, e.g. <code>model: $.model</code>.</p>}
                 {groupByEntries.map(([key, value], i) => (
                   <div key={i} className="flex items-center gap-2 mb-2">
-                    <input
+                    <TextBox
                       type="text"
                       placeholder="model"
-                      className="w-1/3 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                      className="w-1/3 font-mono"
                       value={key}
                       onChange={(e) => setGroupByKey(i, 'key', e.target.value)}
                     />
                     <span className="text-slate-400 dark:text-slate-500 text-sm">→</span>
-                    <input
+                    <TextBox
                       type="text"
                       placeholder="$.model"
-                      className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                      className="flex-1 font-mono"
                       value={value}
                       onChange={(e) => setGroupByKey(i, 'value', e.target.value)}
                     />
