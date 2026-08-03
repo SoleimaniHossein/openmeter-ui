@@ -1,0 +1,180 @@
+# please use port numbers in the 40000 range so that it doesn't conflict with the main dev environment
+x-openmeter-worker-healthcheck: &openmeter-worker-healthcheck
+  test: ["CMD", "wget", "--spider", "http://localhost:10000/healthz"]
+  interval: 5s
+  timeout: 3s
+  retries: 30
+
+services:
+  openmeter:
+    image: ghcr.io/openmeterio/openmeter
+    command: openmeter --address 0.0.0.0:8888 --config /etc/openmeter/config.yaml
+    restart: always
+    pull_policy: always
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "48888:8888"
+    volumes:
+      - ./config.yaml:/etc/openmeter/config.yaml
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://openmeter:8888/api/v1/debug/metrics"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  sink-worker:
+    image: ghcr.io/openmeterio/openmeter:latest
+    command: openmeter-sink-worker --config /etc/openmeter/config.yaml
+    restart: always
+    pull_policy: always
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      openmeter:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:40000:10000"
+    volumes:
+      - ./config.yaml:/etc/openmeter/config.yaml
+    healthcheck: *openmeter-worker-healthcheck
+
+  balance-worker:
+    image: ghcr.io/openmeterio/openmeter:latest
+    command: openmeter-balance-worker --config /etc/openmeter/config.yaml
+    restart: always
+    pull_policy: always
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      openmeter:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:40001:10000"
+    volumes:
+      - ./config.yaml:/etc/openmeter/config.yaml
+    healthcheck: *openmeter-worker-healthcheck
+
+  notification-service:
+    image: ghcr.io/openmeterio/openmeter:latest
+    command: openmeter-notification-service --config /etc/openmeter/config.yaml
+    restart: always
+    pull_policy: always
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      openmeter:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:40002:10000"
+    volumes:
+      - ./config.yaml:/etc/openmeter/config.yaml
+    healthcheck: *openmeter-worker-healthcheck
+
+  billing-worker:
+    image: ghcr.io/openmeterio/openmeter:latest
+    command: openmeter-billing-worker --config /etc/openmeter/config.yaml
+    restart: always
+    pull_policy: always
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      openmeter:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:40003:10000"
+    volumes:
+      - ./config.yaml:/etc/openmeter/config.yaml
+    healthcheck: *openmeter-worker-healthcheck
+
+  openmeter-jobs:
+    image: ghcr.io/openmeterio/openmeter:latest
+    command: openmeter-jobs --config /etc/openmeter/config.yaml quickstart cron
+    restart: always
+    pull_policy: never
+    depends_on:
+      openmeter:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config.yaml:/etc/openmeter/config.yaml
+
+  kafka:
+    extends:
+      file: docker-compose.base.yaml
+      service: kafka
+    ports:
+      - "127.0.0.1:29092:29092"
+
+  clickhouse:
+    extends:
+      file: docker-compose.base.yaml
+      service: clickhouse
+    ports:
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9009:9009"
+
+  redis:
+    extends:
+      file: docker-compose.base.yaml
+      service: redis
+
+  postgres:
+    extends:
+      file: docker-compose.base.yaml
+      service: postgres
+
+  svix:
+    extends:
+      file: docker-compose.base.yaml
+      service: svix
+
+  ch-ui:
+    extends:
+      file: docker-compose.base.yaml
+      service: ch-ui
+    profiles:
+      - dev
+    ports:
+      - "${CH_UI_PORT:-5521}:5521"
+  # Development
+  # docker compose --profile dev up
+  kafka-ui:
+    extends:
+      file: docker-compose.base.yaml
+      service: kafka-ui
+    profiles:
+      - dev
+    ports:
+      - "127.0.0.1:8084:8080"
+
+configs:
+  svix_sql:
+    content: |
+      CREATE USER svix WITH PASSWORD 'svix';
+      CREATE DATABASE svix;
+      GRANT ALL PRIVILEGES ON DATABASE svix TO svix;
+      ALTER DATABASE svix OWNER TO svix;

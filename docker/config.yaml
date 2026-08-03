@@ -1,0 +1,75 @@
+ingest:
+  kafka:
+    broker: kafka:9092
+    brokerAddressFamily: v4
+    socketKeepAliveEnable: true
+    topicMetadataRefreshInterval: 10s
+
+aggregation:
+  clickhouse:
+    address: clickhouse:9000
+
+sink:
+  minCommitCount: 1
+  namespaceRefetch: 1s
+  namespaceRefetchTimeout: 1s
+  kafka:
+    brokers: kafka:9092
+    brokerAddressFamily: v4
+    socketKeepAliveEnable: true
+    topicMetadataRefreshInterval: 10s
+  dedupe:
+    enabled: true
+    driver: redis
+    config:
+      address: redis:6379
+      database: 0
+      expiration: 768h # 32d
+
+postgres:
+  url: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+  autoMigrate: migration # Runs migrations as part of the service startup, valid values are: ent, migration, false
+
+credits:
+  enabled: true
+  enableCreditThenInvoice: true
+
+meters:
+  # Sample meter to count API requests
+  - slug: api_requests_total        # Unique identifier for the meter
+    description: API Requests
+    eventType: request              # Filter events by type
+    aggregation: COUNT              # Aggregation method: COUNT, SUM, etc.
+    groupBy:
+      method: $.method              # HTTP Method: GET, POST, etc.
+      route: $.route                # Route: /products/:product_id
+
+  # Sample meter to sum API request duration
+  - slug: api_requests_duration
+    description: API Request Duration
+    eventType: request
+    aggregation: SUM
+    valueProperty: $.duration_ms     # JSONPath to parse usage value
+    groupBy:
+      method: $.method
+      route: $.route
+
+  # Sample meter to count LLM Token Usage
+  - slug: tokens_total
+    description: AI Token Usage
+    eventType: prompt               # Filter events by type
+    aggregation: SUM
+    valueProperty: $.tokens         # JSONPath to parse usage value
+    groupBy:
+      model: $.model                # AI model used: gpt4-turbo, etc.
+      type: $.type                  # Prompt type: input, output, system
+
+portal:
+  enabled: true
+  tokenSecret: this-isnt-secure
+
+svix:
+   # This is just a random JWT based on docker-compose's JWT_SECRET, so it's not sensitive
+  apiKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MjI5NzYyNzMsImV4cCI6MjAzODMzNjI3MywibmJmIjoxNzIyOTc2MjczLCJpc3MiOiJzdml4LXNlcnZlciIsInN1YiI6Im9yZ18yM3JiOFlkR3FNVDBxSXpwZ0d3ZFhmSGlyTXUifQ.B0OVUl3w9m7nKkSjIpPrxbfXL9IuVimy8LXcdIc3q7k
+  serverURL: http://svix:8071
+  debug: false
