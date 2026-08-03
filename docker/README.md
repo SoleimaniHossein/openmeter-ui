@@ -8,10 +8,9 @@
 
 ## Using Make (recommended)
 
-A `Makefile` is included to launch OpenMeter and its dependencies:
+A `Makefile` is included at the repo root to launch OpenMeter and its dependencies:
 
 ```sh
-cd docker
 make up     # production mode
 make dev    # development mode (also starts kafka-ui and ch-ui)
 make down   # stop containers (keep data)
@@ -19,6 +18,15 @@ make clean  # stop containers and remove all data/volumes
 make logs   # tail logs
 make status # show running services
 make pull   # pull latest images
+```
+
+The same Makefile also drives the UI:
+
+```sh
+make install  # npm install
+make ui       # run the UI dev server
+make build    # production build
+make start    # start OpenMeter (Docker) + run the UI dev server
 ```
 
 Run `make help` for the full list of targets.
