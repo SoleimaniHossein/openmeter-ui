@@ -1,18 +1,103 @@
 import axios from 'axios';
 
 let API_TOKEN = localStorage.getItem('openmeter_token') || '';
-// Use relative path by default (goes through Vite proxy). Can be overridden
-// with VITE_API_BASE_URL for direct/backend access or production builds.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
+// The effective API base URL for browser requests. An explicit absolute
+// VITE_API_BASE_URL is used verbatim (direct, non-proxy access in production).
+// Otherwise the browser talks to its own origin via the Vite dev proxy, which
+// forwards the request to the selected backend (no CORS needed).
+const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
+const PROXY_TARGET_KEY = 'openmeter_proxy_target';
+
+const getStoredProxyTarget = () => localStorage.getItem(PROXY_TARGET_KEY) || '';
+
+// Extract the origin (scheme://host[:port]) from a backend URL so the Vite
+// proxy can route the request to the selected backend. Normalizes bare
+// host[:port] values to an http:// URL.
+const toOrigin = (url) => {
+  if (!url) return '';
+  let value = String(url).trim();
+  if (/^https?:/i.test(value)) {
+    /* already absolute */
+  } else if (/^\/\//.test(value)) {
+    value = 'http:' + value;
+  } else if (/^[a-zA-Z0-9][a-zA-Z0-9.-]*:\d+(\/|$)/.test(value)) {
+    value = 'http://' + value;
+  } else {
+    return '';
+  }
+  try {
+    return new URL(value).origin;
+  } catch {
+    return '';
+  }
+};
+
+// Send the selected backend origin to the Vite dev proxy on every request. The
+// proxy uses it to pick the upstream target (falling back to API_PROXY_TARGET).
+const applyProxyTarget = () => {
+  const target = getStoredProxyTarget() || import.meta.env.VITE_API_PROXY_TARGET || '';
+  const origin = toOrigin(target);
+  if (origin) {
+    api.defaults.headers.common['X-API-Target'] = origin;
+  } else {
+    delete api.defaults.headers.common['X-API-Target'];
+  }
+};
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: DEFAULT_API_BASE_URL,
   headers: {
     'Authorization': `Bearer ${API_TOKEN}`,
     'Content-Type': 'application/json',
   },
   // Don't add any CORS headers - the proxy handles it
 });
+
+applyProxyTarget();
+
+// Tag likely-CORS failures so components can show a helpful message.
+// Browsers can't distinguish CORS from other network errors, so we treat any
+// no-response network error aimed at a different origin as a CORS problem.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ERR_NETWORK' && !error.response && error.config?.baseURL) {
+      const base = error.config.baseURL;
+      if (/^https?:/i.test(base)) {
+        try {
+          if (new URL(base, window.location.origin).origin !== window.location.origin) {
+            error.isCors = true;
+            error.corsTarget = base;
+          }
+        } catch {
+          /* ignore malformed URLs */
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Runtime API target management (editable from the Settings screen).
+export const getApiProxyTarget = () => getStoredProxyTarget();
+
+// The backend origin requests are currently routed to (for diagnostics).
+export const getEffectiveProxyTarget = () =>
+  api.defaults.headers.common['X-API-Target'] ||
+  import.meta.env.VITE_API_PROXY_TARGET ||
+  '(default via proxy)';
+
+export const setApiProxyTarget = (url) => {
+  const trimmed = (url || '').trim();
+  if (trimmed) {
+    localStorage.setItem(PROXY_TARGET_KEY, trimmed);
+  } else {
+    localStorage.removeItem(PROXY_TARGET_KEY);
+  }
+  applyProxyTarget();
+};
 
 // Token management
 export const setApiToken = (token) => {

@@ -3,6 +3,7 @@ import { Send, RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react
 import { sendEvent } from '../api/openmeter';
 import SearchableSelect from './SearchableSelect';
 import TextBox from './TextBox';
+import { describeApiError } from '../utils/errors';
 
 const SendEvent = () => {
   const [loading, setLoading] = useState(false);
@@ -43,7 +44,7 @@ const SendEvent = () => {
     } catch (error) {
       setResult({ 
         success: false, 
-        message: `❌ Failed to send event: ${error.message}`,
+        message: `❌ Failed to send event: ${describeApiError(error, 'Send failed')}`,
         details: 'Check that your OpenMeter server is running and the event endpoint is available'
       });
     } finally {
@@ -93,7 +94,7 @@ const SendEvent = () => {
     } catch (error) {
       setResult({ 
         success: false, 
-        message: `❌ Failed to send events: ${error.message}`,
+        message: `❌ Failed to send events: ${describeApiError(error, 'Send failed')}`,
         details: 'Check your connection to OpenMeter'
       });
     } finally {

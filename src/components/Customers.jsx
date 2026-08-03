@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, RefreshCw, Edit2, Trash2, FileText, Receipt, Loader2, AlertCircle, CheckCircle, Users, Send, Info, PackagePlus, BadgeCheck, X, ArrowLeftRight, Ban } from 'lucide-react';
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer, invoiceCustomer, getPlans, createSubscription, cancelSubscription, changeSubscription } from '../api/openmeter';
 import { describeInvoiceError, hasSubscription } from '../utils/billing';
+import { describeApiError } from '../utils/errors';
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
 import TextBox from './TextBox';
@@ -45,7 +46,7 @@ const Customers = () => {
       const res = await getCustomers({ pageSize: 200 });
       setCustomers(res.data || []);
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to load customers' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to load customers') });
     } finally {
       setLoading(false);
     }
@@ -84,7 +85,7 @@ const Customers = () => {
       setMessage({ type: 'success', text: `Customer ${editingCustomer ? 'updated' : 'created'} successfully.` });
       fetchCustomers();
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to save customer' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to save customer') });
     }
   };
 
@@ -101,7 +102,7 @@ const Customers = () => {
           fetchCustomers();
         },
       });
-    } catch (error) { setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete customer' }); }
+    } catch (error) { setMessage({ type: 'error', text: describeApiError(error, 'Failed to delete customer') }); }
   };
 
   const handleEdit = (customer) => {
@@ -148,7 +149,7 @@ const Customers = () => {
       setMessage({ type: 'success', text: `${subscribeCustomer.name} is now subscribed to "${plan.name || plan.key}". Send usage events, then generate an invoice.` });
       fetchCustomers();
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to create subscription' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to create subscription') });
     } finally {
       setSubscribing(false);
     }
@@ -180,7 +181,7 @@ const Customers = () => {
       setMessage({ type: 'success', text: `${changingCustomer.name}'s subscription will switch to "${plan.name || plan.key}"${changeTiming === 'immediate' ? '' : ' at the next billing cycle'}.` });
       fetchCustomers();
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to change subscription' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to change subscription') });
     } finally {
       setChanging(false);
     }
@@ -207,7 +208,7 @@ const Customers = () => {
       });
       fetchCustomers();
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to cancel subscription' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to cancel subscription') });
     } finally {
       setCanceling(false);
     }

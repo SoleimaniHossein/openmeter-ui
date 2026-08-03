@@ -5,6 +5,7 @@ import { sendEvent, getEvents, getMeters, getCustomers } from '../api/openmeter'
 import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
 import TextArea from './TextArea';
+import { describeApiError } from '../utils/errors';
 
 const formatTime = (iso) => {
   if (!iso) return '-';
@@ -135,7 +136,7 @@ const Events = () => {
         setPrevCursors([]);
       }
     } catch (error) {
-      setEventsError(error?.response?.data?.detail || error.message || 'Failed to load events');
+      setEventsError(describeApiError(error, 'Failed to load events'));
       if (!silent) setEvents([]);
     } finally {
       if (!silent) setEventsLoading(false);
@@ -176,7 +177,7 @@ const Events = () => {
       setResult({ success: true, message: `✅ Sent 1 event successfully!` });
       fetchEvents({ reset: true });
     } catch (error) {
-      setResult({ success: false, message: `❌ Failed: ${error.message}` });
+      setResult({ success: false, message: `❌ Failed: ${describeApiError(error, 'Send failed')}` });
     } finally { setLoading(false); }
   };
 
@@ -193,7 +194,7 @@ const Events = () => {
       setResult({ success: true, message: `✅ Sent ${success} events successfully!` });
       fetchEvents({ reset: true });
     } catch (error) {
-      setResult({ success: false, message: `❌ Failed: ${error.message}` });
+      setResult({ success: false, message: `❌ Failed: ${describeApiError(error, 'Send failed')}` });
     } finally { setLoading(false); }
   };
 

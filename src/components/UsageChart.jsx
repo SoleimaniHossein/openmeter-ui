@@ -5,12 +5,12 @@ import {
 import { format, parseISO, isValid } from 'date-fns';
 import { useTheme } from '../context/ThemeContext';
 
-const UsageChart = ({ data }) => {
+const UsageChart = ({ data, labelFormat = 'HH:mm' }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   const validData = (data || []).filter(p => p.from && isValid(new Date(p.from))).map(p => ({
-    time: format(new Date(p.from), 'HH:mm'),
+    time: format(new Date(p.from), labelFormat),
     value: p.value || 0,
   }));
 

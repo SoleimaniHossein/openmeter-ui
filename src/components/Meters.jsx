@@ -5,6 +5,7 @@ import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
 import TextBox from './TextBox';
 import { useConfirm } from '../hooks/useConfirm';
+import { describeApiError } from '../utils/errors';
 
 const AGGREGATIONS = ['SUM', 'COUNT', 'UNIQUE_COUNT', 'AVG', 'MIN', 'MAX', 'LATEST'];
 
@@ -37,7 +38,7 @@ const Meters = () => {
       const res = await getMeters();
       setMeters(res.data || []);
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to load meters' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to load meters') });
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,7 @@ const Meters = () => {
       setMessage({ type: 'success', text: editingMeter ? 'Meter updated successfully.' : 'Meter created successfully.' });
       fetchMeters();
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to save meter' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to save meter') });
     } finally {
       setSaving(false);
     }
@@ -97,7 +98,7 @@ const Meters = () => {
         },
       });
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete meter' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to delete meter') });
     }
   };
 
@@ -129,7 +130,7 @@ const Meters = () => {
         text: `${meter.name}: total (24h) = ${total} (${agg}${meter.valueProperty ? ' of ' + meter.valueProperty : ''})`,
       });
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Error fetching usage' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Error fetching usage') });
     } finally {
       setViewingUsage(null);
     }

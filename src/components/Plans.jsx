@@ -6,6 +6,7 @@ import TextBox from './TextBox';
 import TextArea from './TextArea';
 import LoadingSpinner from './LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
+import { describeApiError } from '../utils/errors';
 
 const CADENCES = [
   { value: 'P1M', label: 'Monthly (P1M)' },
@@ -156,7 +157,7 @@ const Plans = () => {
       const res = await getPlans();
       setPlans(res.data || []);
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to load plans' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to load plans') });
     } finally {
       setLoading(false);
     }
@@ -284,7 +285,7 @@ const Plans = () => {
       fetchPlans();
     } catch (error) {
       const detail = error?.response?.data?.detail || error?.response?.data?.extensions?.validationErrors?.map(v => v.message).join('; ');
-      setMessage({ type: 'error', text: detail || error.message || `Failed to ${editingPlan ? 'update' : 'create'} plan` });
+      setMessage({ type: 'error', text: detail || describeApiError(error, `Failed to ${editingPlan ? 'update' : 'create'} plan`) });
     } finally {
       setSaving(false);
     }
@@ -304,7 +305,7 @@ const Plans = () => {
         },
       });
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to publish plan' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to publish plan') });
     }
   };
 
@@ -322,7 +323,7 @@ const Plans = () => {
         },
       });
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to archive plan' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to archive plan') });
     }
   };
 
@@ -341,7 +342,7 @@ const Plans = () => {
         },
       });
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to delete plan' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to delete plan') });
     }
   };
 
@@ -360,7 +361,7 @@ const Plans = () => {
         },
       });
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to create new version' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to create new version') });
     }
   };
 

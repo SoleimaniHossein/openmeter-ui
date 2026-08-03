@@ -4,6 +4,7 @@ import { format, isValid } from 'date-fns';
 import { advanceInvoice, approveInvoice, deleteInvoice, voidInvoice, retryInvoice, snapshotQuantitiesInvoice, invoiceCustomer, getInvoice } from '../api/openmeter';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import { useConfirm } from '../hooks/useConfirm';
+import { describeApiError } from '../utils/errors';
 
 const formatMoney = (value, currency = 'USD') => {
   const num = Number(value || 0);
@@ -76,7 +77,7 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
         await doRun(true);
       }
     } catch (err) {
-      setError(err?.response?.data?.detail || err.message || 'Action failed');
+      setError(describeApiError(err, 'Action failed'));
     } finally {
       setAction(null);
     }
@@ -89,7 +90,7 @@ const InvoiceDetail = ({ invoice: initialInvoice, onClose, onChanged }) => {
       const updated = await getInvoice(invoice.id);
       setInvoice(updated);
     } catch (err) {
-      setError(err?.response?.data?.detail || err.message || 'Failed to refresh invoice');
+      setError(describeApiError(err, 'Failed to refresh invoice'));
     } finally {
       setLoading(false);
     }

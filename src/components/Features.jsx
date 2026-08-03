@@ -15,6 +15,7 @@ import LoadingSpinner from './LoadingSpinner';
 import SearchableSelect from './SearchableSelect';
 import TextBox from './TextBox';
 import { useConfirm } from '../hooks/useConfirm';
+import { describeApiError } from '../utils/errors';
 
 const EMPTY_FILTER = { property: '', value: '' };
 
@@ -45,7 +46,7 @@ const Features = () => {
       const res = await getFeatures({ includeArchived });
       setFeatures(res.data || []);
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to load features' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to load features') });
     } finally {
       setLoading(false);
     }
@@ -85,7 +86,7 @@ const Features = () => {
       showMessage('success', `Feature "${formData.name.trim()}" created successfully.`);
       fetchFeatures();
     } catch (error) {
-      showMessage('error', error?.response?.data?.detail || error.message || 'Failed to create feature');
+      showMessage('error', describeApiError(error, 'Failed to create feature'));
     } finally {
       setSaving(false);
     }
@@ -106,7 +107,7 @@ const Features = () => {
         },
       });
     } catch (error) {
-      showMessage('error', error?.response?.data?.detail || error.message || 'Failed to archive feature');
+      showMessage('error', describeApiError(error, 'Failed to archive feature'));
     }
   };
 

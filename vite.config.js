@@ -20,8 +20,22 @@ export default defineConfig(({ mode }) => {
         return path.replace(/^\/api/, '/api/v3');
       },
       configure: (proxy, options) => {
+        const web = proxy.web.bind(proxy);
+        // Allow per-request target selection: the browser sends the selected
+        // "API Proxy Target" (from Settings) as an X-API-Target header. This
+        // keeps requests same-origin (no CORS) while letting the target change
+        // at runtime without restarting the dev server.
+        proxy.web = (req, res, reqOptions) => {
+          const dynamicTarget = req.headers['x-api-target'];
+          if (dynamicTarget) {
+            console.log('[Proxy]', req.method, req.url, '->', dynamicTarget);
+            return web(req, res, { ...(reqOptions || {}), target: dynamicTarget });
+          }
+          console.log('[Proxy]', req.method, req.url, '->', options.target);
+          return web(req, res, reqOptions || {});
+        };
         proxy.on('proxyReq', (proxyReq, req, res) => {
-          console.log('[Proxy]', req.method, req.url, '->', proxyReq.path);
+          console.log('[Proxy Request]', req.method, '->', proxyReq.path);
         });
         proxy.on('proxyRes', (proxyRes, req, res) => {
           console.log('[Proxy Response]', proxyRes.statusCode, req.url);

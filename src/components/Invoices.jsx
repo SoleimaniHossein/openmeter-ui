@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, FileText, Eye, Loader2, Receipt, Wallet, Clock, AlertCircle, CheckCircle, Info, Send } from 'lucide-react';
 import { getInvoices, getCustomers, invoiceCustomer } from '../api/openmeter';
 import { describeInvoiceError } from '../utils/billing';
+import { describeApiError } from '../utils/errors';
 import LoadingSpinner from './LoadingSpinner';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import InvoiceDetail from './InvoiceDetail';
@@ -53,7 +54,7 @@ const Invoices = () => {
       const res = await getInvoices(params);
       setInvoices(res.data || []);
     } catch (error) {
-      setMessage({ type: 'error', text: error?.response?.data?.detail || error.message || 'Failed to load invoices' });
+      setMessage({ type: 'error', text: describeApiError(error, 'Failed to load invoices') });
     } finally {
       setLoading(false);
     }
