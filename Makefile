@@ -93,7 +93,7 @@ build:
 preview:
 	npm run preview
 
-# --- Everything ---
+# ---run Everything  ---
 
 start:
 	$(COMPOSE) --profile $(DEV_PROFILE) up -d
